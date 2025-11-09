@@ -5,42 +5,95 @@
   <title>ICD-O Code Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { --bg:#0b0b0b; --fg:#f0f0f0; --muted:#9aa0a6; --accent:#6ee7ff; --card:#151515; --border:#2a2a2a; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--fg); }
-    header { padding:24px; border-bottom:1px solid var(--border); background:#0f0f0f; }
-    header h1 { margin:0; font-size:20px; letter-spacing:0.2px; }
-    main { max-width:1100px; margin:0 auto; padding:24px; display:grid; gap:20px; grid-template-columns: 1fr; }
-    .grid { display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
-    .span-6 { grid-column: span 6; }
-    .span-12 { grid-column: span 12; }
-    label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
-    input[type="text"], select { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#0e0e0e; color:var(--fg); }
-    select { min-height:40px; }
-    .row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    .btns { display:flex; gap:10px; align-items:center; }
-    button { padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:#101010; color:var(--fg); cursor:pointer; }
-    button:hover { border-color:#3a3a3a; }
-    #resultCode { font-size:18px; font-weight:600; letter-spacing:0.3px; }
-    #copied { display:none; font-size:12px; color:var(--accent); }
-    .hint { font-size:12px; color:var(--muted); }
-    .status { font-size:12px; color:var(--muted); }
-    a { color:var(--accent); text-decoration:none; }
-    a:hover { text-decoration:underline; }
-    @media (max-width: 900px) {
-      .span-6 { grid-column: span 12; }
-      .row { grid-template-columns: 1fr; }
+    :root{
+      --bg:#f5f1e6;       /* beige */
+      --fg:#222222;       /* dark text */
+      --muted:#6b6b6b;    /* secondary text */
+      --accent:#0b6cff;   /* links, highlights */
+      --card:#ffffff;     /* card background */
+      --border:#d8cfc0;   /* soft border */
+    }
+
+    *{ box-sizing: border-box; }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: Calibri, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height:1.4;
+    }
+
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px;
+      display:grid;
+      gap:20px;
+      grid-template-columns: 1fr;
+    }
+
+    .grid{ display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+    }
+    .span-6{ grid-column: span 6; }
+    .span-12{ grid-column: span 12; }
+
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+
+    input[type="text"], select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:#ffffff;
+      color:var(--fg);
+      outline:none;
+    }
+    input[type="text"]:focus, select:focus{
+      border-color:#b7ae9f;
+      box-shadow: 0 0 0 3px rgba(11,108,255,0.08);
+    }
+
+    select{ min-height:40px; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+
+    .btns{ display:flex; gap:10px; align-items:center; }
+    button{
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#ffffff;
+      color:var(--fg);
+      cursor:pointer;
+    }
+    button:hover{ border-color:#bcb4a5; }
+
+    #resultCode{ font-size:18px; font-weight:600; letter-spacing:0.3px; }
+    #copied{ display:none; font-size:12px; color:var(--accent); }
+    .hint{ font-size:12px; color:var(--muted); }
+    .status{ font-size:12px; color:var(--muted); }
+
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    @media (max-width: 900px){
+      .span-6{ grid-column: span 12; }
+      .row{ grid-template-columns: 1fr; }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <header><h1>ICD-O Code Builder</h1></header>
   <main>
     <div class="card span-12 status">
       CSVs are loaded from <code>data/</code> or <code>docs/data/</code> automatically.
-      If names don’t appear, your file likely lacks a name column. This page now also
+      If names don’t appear, your file likely lacks a name column. This page also
       stitches multi-cell names and understands Greek headers.
     </div>
 
@@ -154,61 +207,48 @@
       return "";
     }
 
-    // New: robust multi-cell morphology name extraction with Unicode letters (Greek-friendly)
-// works in all browsers
-function robustMorphFromRow(row){
-  // 1) "8500/3 - Adenocarcinoma, NOS"
-  for(const cell of row){
-    const s = String(cell||"");
-    const m = s.match(/^(\d{4})(?:\/\d)?\s*[-–—]?\s*(.+)$/);
-    if (m) return { code: m[1], name: norm(m[2]) };
-  }
+    // Robust multi-cell morphology name extraction
+    function robustMorphFromRow(row){
+      for(const cell of row){
+        const s = String(cell||"");
+        const m = s.match(/^(\d{4})(?:\/\d)?\s*[-–—]?\s*(.+)$/);
+        if (m) return { code: m[1], name: norm(m[2]) };
+      }
+      const codeIdx = row.findIndex(c => /\b\d{4}\b/.test(String(c||"")));
+      if (codeIdx < 0) return null;
+      const code = String(row[codeIdx]).match(/\b(\d{4})\b/)[1];
+      const hasLetters = s => /[A-Za-zΑ-Ωα-ω]/.test(s);
 
-  // 2) find first 4-digit code
-  const codeIdx = row.findIndex(c => /\b\d{4}\b/.test(String(c||"")));
-  if (codeIdx < 0) return null;
-  const code = String(row[codeIdx]).match(/\b(\d{4})\b/)[1];
+      const parts = [];
+      for (let j = codeIdx + 1; j < row.length; j++){
+        const s = norm(row[j]);
+        if (!s) continue;
+        if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
+        if (/^[0-9/.\-]+$/.test(s)) continue;
+        if (!hasLetters(s)) continue;
+        parts.push(s);
+      }
+      if (parts.length) return { code, name: norm(parts.join(" ")) };
 
-  // helper: is a plausible text token (has at least one letter A–Zα–ω)
-  const hasLetters = s => /[A-Za-zΑ-Ωα-ω]/.test(s);
+      const leftParts = [];
+      for (let j = codeIdx - 1; j >= 0; j--){
+        const s = norm(row[j]);
+        if (!s) continue;
+        if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
+        if (/^[0-9/.\-]+$/.test(s)) continue;
+        if (!hasLetters(s)) continue;
+        leftParts.unshift(s);
+      }
+      if (leftParts.length) return { code, name: norm(leftParts.join(" ")) };
 
-  // 3) collect text fragments AFTER code
-  const parts = [];
-  for (let j = codeIdx + 1; j < row.length; j++){
-    const s = norm(row[j]);
-    if (!s) continue;
-    if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
-    if (/^[0-9/.\-]+$/.test(s)) continue;
-    if (!hasLetters(s)) continue;
-    parts.push(s);
-  }
-  if (parts.length){
-    return { code, name: norm(parts.join(" ")) };
-  }
-
-  // 4) try BEFORE code
-  const leftParts = [];
-  for (let j = codeIdx - 1; j >= 0; j--){
-    const s = norm(row[j]);
-    if (!s) continue;
-    if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
-    if (/^[0-9/.\-]+$/.test(s)) continue;
-    if (!hasLetters(s)) continue;
-    leftParts.unshift(s);
-  }
-  if (leftParts.length){
-    return { code, name: norm(leftParts.join(" ")) };
-  }
-
-  // 5) pick longest textual cell
-  let best = "";
-  for (const cell of row){
-    const s = norm(cell);
-    if (!hasLetters(s)) continue;
-    if (s.length > best.length) best = s;
-  }
-  return best ? { code, name: best } : null;
-}
+      let best = "";
+      for (const cell of row){
+        const s = norm(cell);
+        if (!hasLetters(s)) continue;
+        if (s.length > best.length) best = s;
+      }
+      return best ? { code, name: best } : null;
+    }
 
     function setupFilter(inputId, selectEl, all, placeholder){
       const input = $("#"+inputId);
@@ -273,7 +313,7 @@ function robustMorphFromRow(row){
         return nameGuess ? {code:codeGuess, name:nameGuess} : null;
       }).filter(Boolean);
 
-      // ---- MORPHOLOGY (very robust) ----
+      // ---- MORPHOLOGY ----
       const mrows = await loadCSVAny([
         "data/icdo_morphology.csv",
         "docs/data/icdo_morphology.csv"
@@ -291,13 +331,11 @@ function robustMorphFromRow(row){
       const mDataRows = looksLikeHeader ? mrows.slice(1) : mrows;
 
       morphAll = mDataRows.map(row=>{
-        // Header-driven happy path
         if (morphCodeIdx>=0 && morphNameIdx>=0 && morphCodeIdx!==morphNameIdx){
           const code = norm(row[morphCodeIdx]||"").match(/\b(\d{4})\b/)?.[1] || "";
           const name = norm(row[morphNameIdx]||"");
           return code && name ? {code, name} : (code ? {code, name:""} : null);
         }
-        // Heuristics across messy rows
         return robustMorphFromRow(row);
       }).filter(Boolean);
 
@@ -389,5 +427,3 @@ function robustMorphFromRow(row){
   </script>
 </body>
 </html>
-
-
