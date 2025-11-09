@@ -11,17 +11,17 @@ morphology_code,preferred_term
 8003/3,"Malignant tumor, giant cell type"
 8004/3,"Malignant tumor, spindle cell type"
 8005/0,"Clear cell tumor, NOS"
-8005/3,"Maligant tumor, clear cell type"
+8005/3,"Malignant tumor, clear cell type"
 8010/0,Epithelial tumor benign
 8010/2,Carcinoma in situ
 8010/3,Carcinoma NOS
 8010/6,Carcinoma metastatic NOS
-8010/9,Carcinamatosis
+8010/9,Carcinomatosis
 8011/0,Epithelioma benign
 8011/3,Epithelioma malignant
 8012/3,Large cell carcinoma NOS
 8013/3,Large cell neuroendocrine carcinoma
-8014/3,Large cell carcinoma with rhaboid phenotype
+8014/3,Large cell carcinoma with rhabdoid phenotype
 8015/3,Glassy cell carcinoma
 8020/3,Carcinoma undifferentiated NOS
 8021/3,"Carcinoma, anaplastic NOS"
@@ -44,7 +44,7 @@ morphology_code,preferred_term
 8050/2,Papillary carcinoma in situ
 8050/3,"Papillary carcinoma, NOS"
 8051/0,Verrucous papilloma
-8051/3,"Verrucous carcimoma, NOS"
+8051/3,"Verrucous carcinoma, NOS"
 8052/0,"Squamous cell papilloma, NOS"
 8052/2,"Papillary squamous cell papilloma, non-invasive"
 8052/3,Papillary squamous cell carcinoma
@@ -69,7 +69,7 @@ morphology_code,preferred_term
 8083/3,Basaloid squamous cell carcinoma
 8084/3,"Squamous cell carcinoma, clear cell type"
 8090/1,Basal cell tumour (C44._)
-8090/3,"Basal cell carcimoma, NOS (C44._)"
+8090/3,"Basal cell carcinoma, NOS (C44._)"
 8091/3,Multifocal superficial basal cell carcinoma (C44._)
 8092/3,"Infiltrating basal cell carcinoma, NOS (C44._)"
 8093/3,"Basal cell carcinoma, fibroepithelial (C44._)"
@@ -83,7 +83,7 @@ morphology_code,preferred_term
 8102/0,Trichilemmoma (C44._)
 8102/3,Trichilemmocarcinoma (C44._)
 8103/0,Pilar tumor (C44._)
-8110/0,"Pilomatixoma, NOS (C44._)"
+8110/0,"Pilomatrixoma, NOS (C44._)"
 8110/3,Pilomatrix carcinoma (C44._)
 8120/0,Transitional cell papilloma benign
 8120/1,"Urothelial papilloma, NOS"
@@ -98,7 +98,7 @@ morphology_code,preferred_term
 8130/1,Papillary transitional cell neoplasm of low malignant potential (C67._)
 8130/2,"Papillary transitional cell carcinoma, non-invasive (C67._)"
 8130/3,Papillary transitional cell carcinoma (C67._)
-8131/3,"Transitional cell carcinomal, micropapillary (C67._)"
+8131/3,"Transitional cell carcinoma, micropapillary (C67._)"
 8140/0,"Adenoma, NOS"
 8140/1,Atypical adenoma
 8140/2,"Adenocarcinoma in situ, NOS"
@@ -106,9 +106,9 @@ morphology_code,preferred_term
 8140/6,"Adenocarcinoma, metastatic, NOS"
 8141/3,Scirrhous adenocarcinoma
 8142/3,Linitis plastica (C16._)
-8143/3,Sperficial spreading adenocarcinoma
+8143/3,Superficial spreading adenocarcinoma
 8144/3,"Adenocarcinoma, intestinal type (C16._)"
-8145/3,"Carcinoma, diffuse tyoe (C16._)"
+8145/3,"Carcinoma, diffuse type (C16._)"
 8146/0,Monomorphic adenoma
 8147/0,Basal cell adenoma
 8147/3,Basal cell adenocarcinoma
@@ -131,7 +131,7 @@ morphology_code,preferred_term
 8156/3,"Somatostatinoma, malignant"
 8158/1,"Endocrine tumour, functioning, NOS (from ICD-O-3.1)"
 8160/0,"Bile duct adenoma (C22.1, C24.0)"
-8160/3,"Choloangiocarcinoma (C22.1, C24.0)"
+8160/3,"Cholangiocarcinoma (C22.1, C24.0)"
 8161/0,"Bile duct cystadenoma (C22.1, C24.0)"
 8161/3,"Bile duct cystadenocarcinoma (C22.1, C24.0)"
 8162/3,"Klatskin tumour (C22.1, C24.0)"
@@ -144,7 +144,7 @@ morphology_code,preferred_term
 8172/3,"Hepatocellular carcinoma, scirrhous (C22.0)"
 8173/3,"Hepatocellular carcinoma, spindle cell variant (C22.0)"
 8174/3,"Hepatocellular carcinoma, clear cell type (C22.0)"
-8175/3,"Hepatocellular carcinoma, pleomoprhic type (C22.0)"
+8175/3,"Hepatocellular carcinoma, pleomorphic type (C22.0)"
 8180/3,Combined hepatocellular carcinoma and cholangiocarcinoma (C22.0)
 8190/0,Trabecular adenoma
 8190/3,Trabecular adenocarcinoma
@@ -162,11 +162,11 @@ morphology_code,preferred_term
 8211/3,Tubular adenocarcinoma
 8212/0,Flat adenoma
 8213/0,Serrated adenoma (C18._)
-8213/3,Serrated adenocacarcinoma (from ICD-O-3.1)
+8213/3,Serrated adenocarcinoma (from ICD-O-3.1)
 8214/3,Parietal cell carcinoma (C16._)
 8215/3,Adenocarcinoma of anal glands (C21.1)
-8220/0,Adenomatous polypsis coli (C18._)
-8220/3,Adenocarcinoma in adenomatous polypsis coli (C18._)
+8220/0,Adenomatous polyposis coli (C18._)
+8220/3,Adenocarcinoma in adenomatous polyposis coli (C18._)
 8221/0,Multiple adenomatous polyps
 8221/3,Adenocarcinoma in multiple adenomatous polyps
 8230/2,"Ductal carcinoma in situ, solid type (C50._)"
@@ -223,7 +223,7 @@ morphology_code,preferred_term
 8312/3,"Renal cell carcinoma, NOS (C64.9)"
 8313/0,Clear cell adenofibroma (C56.9)
 8313/1,Clear cell adenofibroma of borderline malignancy (C56.9)
-8313/3,Clear cell adenocarcinomafibroma (C56.9)
+8313/3,Clear cell adenocarcinofibroma (C56.9)
 8314/3,Lipid-rich carcinoma (C50._)
 8315/3,Glycogen-rich carcinoma
 8316/3,Cyst-associated renal cell carcinoma (C64.9)
@@ -305,7 +305,7 @@ morphology_code,preferred_term
 8420/3,Ceruminous adenocarcinoma (C44.2)
 8430/1,Mucoepidermoid tumor [obs]
 8430/3,Mucoepidermoid carcinoma
-8440/0,Cystadenoma. NOS
+8440/0,Cystadenoma, NOS
 8440/3,"Cystadenocarcinoma, NOS"
 8441/0,"Serous cystadenoma, NOS"
 8441/3,Serous cystadenocarcinoma NOS (C56.9)
@@ -314,7 +314,7 @@ morphology_code,preferred_term
 8444/1,Clear cell cystic tumour of borderline malignancy (C56.9)
 8450/0,"Papillary cystadenoma, NOS (C56.9)"
 8450/3,"Papillary cystadenocarcinoma, NOS (C56.9)"
-8451/1,"Papillary cystadenoma, borderine malignancy (C56.9)"
+8451/1,"Papillary cystadenoma, borderline malignancy (C56.9)"
 8452/1,Solid pseudopapillary tumor (C25._)
 8452/3,Solid pseudopapillary carcinoma (C25._)
 8453/0,Intraductal papillary-mucinous adenoma (C25._)
@@ -329,14 +329,14 @@ morphology_code,preferred_term
 8463/1,Serous surface papillary tumour of borderline malignancy (C56.9)
 8470/0,Mucinous cystadenoma NOS (C56.9)
 8470/1,Mucinous cystic tumor with moderate dysplasia (C25._) (ICD-O-3.0)
-8470/2,"Mucinous cystadenocarcimoma, non-invasive (C25._)"
+8470/2,"Mucinous cystadenocarcinoma, non-invasive (C25._)"
 8470/3,"Mucinous cystadenocarcinoma, NOS (C56.9)"
 8471/0,"Papillary mucinous cystadenoma, NOS (C56.9)"
 8471/3,Papillary mucinous cystadenocarcinoma (C56.9)
 8472/1,Mucinous cystic tumor of borderline malignancy (C56.9)
 8473/1,"Papillary mucinous cystadenoma, borderline malignancy (C56.9)"
 8480/0,Mucinous adenoma
-8480/1,Low grade appeniceal mucinous adenoma (C18.1)
+8480/1,Low grade appendiceal mucinous adenoma (C18.1)
 8480/3,Mucinous adenocarcinoma
 8480/6,Pseudomyxoma peritonei
 8481/3,Mucin-producing adenocarcinoma
@@ -372,7 +372,7 @@ morphology_code,preferred_term
 8525/3,Polymorphous low grade adenocarcinoma
 8530/3,Inflammatory carcinoma (C50._)
 8540/3,"Paget disease, mammary (C50._)"
-8541/3,Paget disease and inflitrating duct carcinoma of breast (C50._)
+8541/3,Paget disease and infiltrating duct carcinoma of breast (C50._)
 8542/3,"Paget disease, extramammary (except Paget disease of bone)"
 8543/3,Paget disease and intraductal carcinoma of breast (C50._)
 8550/0,Acinar cell adenoma
@@ -389,11 +389,11 @@ morphology_code,preferred_term
 8572/3,Adenocarcinoma with spindle cell metaplasia
 8573/3,Adenocarcinoma with apocrine metaplasia
 8574/3,Adenocarcinoma with neuroendocrine differentiation
-8575/3,Maetaplastic carcinoma NOS
+8575/3,Metaplastic carcinoma NOS
 8576/3,Hepatoid adenocarcinoma
 8580/0,"Thymoma, benign (C37.9)"
 8580/1,"Thymoma, NOS (C37.9)"
-8580/3,"Thymoma, maligant NOS (C37.9)"
+8580/3,"Thymoma, malignant NOS (C37.9)"
 8581/1,"Thymoma, type A, NOS (C37.9)"
 8581/3,"Thymoma, type A, malignant (C37.9)"
 8582/1,"Thymoma, type AB, NOS (C37.9)"
@@ -410,7 +410,7 @@ morphology_code,preferred_term
 8589/3,Carcinoma showing thymus-like element
 8590/1,"Sex cord-gonadal stromal tumor, NOS"
 8591/1,"Sex cord-gonadal stromal tumour, incompletely differentiated"
-8592/1,"Sex cord-gonadal stromal tumour, mkxed forms"
+8592/1,"Sex cord-gonadal stromal tumour, mixed forms"
 8593/1,Stromal tumor with minor sex cord elements (C56.9)
 8600/0,Thecoma NOS (C56.9)
 8600/3,Thecoma malignant (C56.9)
@@ -426,7 +426,7 @@ morphology_code,preferred_term
 8630/1,"Androblastoma, NOS"
 8630/3,"Androblastoma, malignant"
 8631/0,"Sertoli-Leydig cell tumor, well differentiated"
-8631/1,Sertoli-Leydig cell tumor of intermediate differentitation
+8631/1,Sertoli-Leydig cell tumor of intermediate differentiation
 8631/3,"Sertoli-Leydig cell tumor, poorly differentiated"
 8632/1,Gynandroblastoma (C56.9)
 8633/1,"Sertoli-Leydig cell tumor, retiform"
@@ -434,7 +434,7 @@ morphology_code,preferred_term
 8634/3,"Sertoli-Leydig cell tumor, poorly differentiated, with heterologous elements"
 8640/1,Sertoli cell tumor NOS
 8640/3,Sertoli cell carcinoma (C62._)
-8641/0,Sertoli cell tumor with lipid storrage
+8641/0,Sertoli cell tumor with lipid storage
 8642/1,Large cell calcifying Sertoli cell tumor
 8650/0,"Leydig cell tumor, benign (C62._)"
 8650/1,"Leydig cell tumour, NOS (C62._)"
@@ -452,8 +452,8 @@ morphology_code,preferred_term
 8690/1,"Glomus jugulare tumour, NOS (C75.5)"
 8691/1,Aortic body tumour (C75.5)
 8692/1,Carotid body tumour (C75.5)
-8693/1,Extra-adrenal paranglioma NOS
-8693/3,"Extra-adrenal paranglioma, malignant"
+8693/1,Extra-adrenal paraganglioma NOS
+8693/3,"Extra-adrenal paraganglioma, malignant"
 8700/0,"Pheochromocytoma, NOS (C74.1)"
 8700/3,"Pheochromocytoma, malignant (C74.1)"
 8710/3,"Glomangiosarcoma, NOS"
@@ -567,7 +567,7 @@ morphology_code,preferred_term
 8861/0,"Angiolipoma, NOS"
 8862/0,Chondroid lipoma
 8870/0,Myelolipoma
-8880/0,Hibernorma
+8880/0,Hibernoma
 8881/0,Lipoblastomatosis
 8890/0,"Leiomyoma, NOS"
 8890/1,"Leiomyomatosis, NOS"
@@ -575,7 +575,7 @@ morphology_code,preferred_term
 8891/0,Epithelioid leiomyoma
 8892/0,Cellular leiomyoma
 8893/0,Bizarre leiomyoma
-8894/0,Agiomyoma
+8894/0,Angiomyoma
 8894/3,Angiomyosarcoma
 8895/0,Myoma
 8895/3,Myosarcoma
@@ -620,7 +620,7 @@ morphology_code,preferred_term
 8965/0,Nephrogenic adenofibroma (C64.9)
 8966/0,Renomedullary interstitial cell tumor (C64.9)
 8967/0,Ossifying renal tumor (C64.9)
-8970/3,Hepablastoma (C22.0)
+8970/3,Hepatoblastoma (C22.0)
 8971/3,Pancreatoblastoma (C25._)
 8972/3,Pulmonary blastoma (C34._)
 8973/3,Pleuropulmonary blastoma
@@ -645,8 +645,8 @@ morphology_code,preferred_term
 9014/0,"Serous adenofibroma, NOS"
 9014/1,Serous adenofibroma of borderline malignancy
 9014/3,Serous adenocarcinofibroma
-9015/0,"Mucionous adenofibroma, NOS"
-9015/3,Mucionous adenocarcinofibroma
+9015/0,Mucinous adenofibroma, NOS
+9015/3,Mucinous adenocarcinofibroma
 9016/0,Giant fibroadenoma (C50._)
 9020/0,"Phyllodes tumor, benign (C50._)"
 9020/1,"Phyllodes tumor, borderline (C50._)"
@@ -708,7 +708,7 @@ morphology_code,preferred_term
 9122/0,Venous hemangioma
 9123/0,Racemose hemangioma
 9124/3,Kupffer cell sarcoma (C22.0)
-9125/0,Epithelioid hemagioma
+9125/0,Epithelioid hemangioma
 9130/0,"Hemangioendothelioma, benign"
 9130/1,"Hemangioendothelioma, NOS"
 9130/3,"Hemangioendothelioma, malignant"
@@ -791,7 +791,7 @@ morphology_code,preferred_term
 9310/0,"Ameloblastoma, NOS"
 9310/3,"Ameloblastoma, malignant"
 9311/0,Odontoameloblastoma
-9312/0,Squamous odontogenc tumor
+9312/0,Squamous odontogenic tumor
 9320/0,Odontogenic myxoma
 9321/0,Central odontogenic fibroma
 9322/0,Peripheral odontogenic fibroma
@@ -799,7 +799,7 @@ morphology_code,preferred_term
 9330/3,Ameloblastic fibrosarcoma
 9340/0,Calcifying epithelial odontogenic tumor
 9341/1,Clear cell odontogenic tumor
-9342/3,Odontogenic carcninosarcoma
+9342/3,Odontogenic carcinosarcoma
 9350/1,Craniopharyngioma (C75.2)
 9351/1,"Craniopharyngioma, adamantinomatous (C75.2)"
 9352/1,"Craniopharyngioma, papillary (C75.2)"
@@ -817,7 +817,7 @@ morphology_code,preferred_term
 9381/3,Gliomatosis cerebri (C71._)
 9382/3,Mixed glioma (C71._)
 9383/1,Subependymoma (C71._)
-9384/1,Subependymal gant cell astrocytoma (C71._)
+9384/1,Subependymal giant cell astrocytoma (C71._)
 9390/0,"Choroid plexus papilloma, NOS (C71.5)"
 9390/1,Atypical choroid plexus papilloma (C71.5)
 9390/3,Choroid plexus carcinoma (C71.5)
@@ -866,10 +866,10 @@ morphology_code,preferred_term
 9503/3,"Neuroepithelioma, NOS"
 9504/3,Spongioneuroblastoma
 9505/1,"Ganglioma, NOS"
-9505/3,"Ganglioma, anaplystic"
+9505/3,"Ganglioma, anaplastic"
 9506/1,Central neurocytoma
 9507/0,Pacinian tumour
-9508/3,Atypical teratoid/rhabdoid tunmour (C71._)
+9508/3,Atypical teratoid/rhabdoid tumour (C71._)
 9510/0,Retinocytoma (C69.2)
 9510/3,"Retinoblastoma, NOS (C69.2)"
 9511/3,"Retinoblastoma, differentiated (C69.2)"
@@ -880,18 +880,18 @@ morphology_code,preferred_term
 9521/3,Olfactory neurocytoma (C30.0)
 9522/3,Olfactory neuroblastoma (C30.0)
 9523/3,Olfactory neuroepithelioma (C30.0)
-9530/0,"Menigioma, NOS"
-9530/1,"Menigiomatosis, NOS"
-9530/3,"Menigioma, malignant"
-9531/0,Menigiothelial meningioma
-9532/0,Fibrous menigioma
-9533/0,Psammomatous menigioma
-9534/0,Angiomatous menigioma
-9535/0,Hemangioblastic menigioma [obs]
-9537/0,Transitional menigioma
-9538/1,Clear cell menigioma
-9538/3,Papillary menigioma
-9539/1,Atypical menigioma
+9530/0,"Meningioma, NOS"
+9530/1,"Meningiomatosis, NOS"
+9530/3,"Meningioma, malignant"
+9531/0,Meningothelial meningioma
+9532/0,Fibrous meningioma
+9533/0,Psammomatous meningioma
+9534/0,Angiomatous meningioma
+9535/0,Hemangioblastic meningioma [obs]
+9537/0,Transitional meningioma
+9538/1,Clear cell meningioma
+9538/3,Papillary meningioma
+9539/1,Atypical meningioma
 9539/3,Meningeal sarcomatosis
 9540/0,"Neurofibroma, NOS"
 9540/1,"Neurofibromatosis, NOS"
@@ -901,7 +901,7 @@ morphology_code,preferred_term
 9560/0,"Neurilemoma, NOS"
 9560/1,Neurinomatosis
 9560/3,"Neurilemoma, malignant [obs]"
-9561/3,Malignant peripheral nerve sheath tumor with rhabdomzoblastic differentiation
+9561/3,Malignant peripheral nerve sheath tumor with rhabdomyoblastic differentiation
 9562/0,Neurothekeoma
 9570/0,"Neuroma, NOS"
 9571/0,"Perineurioma, NOS"
@@ -949,7 +949,7 @@ morphology_code,preferred_term
 9705/3,Angioimmunoblastic T-cell lymphoma
 9708/3,Subcutaneous panniculitis-like T-cell lymphoma
 9709/3,"Cutaneous T-cell lymphoma, NOS (C44._)"
-9712/3,Intravascular large B-cell lymphoma(C49.9) (from ICD-O-3.1)
+9712/3,Intravascular large B-cell lymphoma (C49.9) (from ICD-O-3.1)
 9714/3,"Anaplastic large cell lymphoma, T-cell and Null-cell type"
 9716/3,Hepatosplenic gamma-delta cell lymphoma
 9717/3,Intestinal T-cell lymphoma
@@ -970,7 +970,7 @@ morphology_code,preferred_term
 9738/3,Large B-cell lymphoma arising in HHV8-associated multicentric Castleman disease (from ICD-O-3.1)
 9740/1,"Mastocytoma, NOS"
 9740/3,Mast cell sarcoma
-9741/1,Indolent systematic mastocytosis (from ICD-O-3.1)
+9741/1,Indolent systemic mastocytosis (from ICD-O-3.1)
 9741/3,Malignant mastocytosis
 9742/3,Mast cell leukemia (C42.1)
 9750/3,Malignant histiocytosis
@@ -989,7 +989,7 @@ morphology_code,preferred_term
 9761/3,Waldenstrom macroglobulinemia (C42.0) (see also M-9671/3)
 9762/3,"Heavy chain disease, NOS"
 9764/3,Immunoproliferative small intestinal disease (C17._)
-9765/1,Monoclonal glammopathy of undetermined significance
+9765/1,Monoclonal gammopathy of undetermined significance
 9766/1,Angiocentric immunoproliferative lesion
 9767/1,Angioimmunoblastic lymphadenopathy (AIC)
 9768/1,T-gamma lymphoproliferative disease
@@ -1038,11 +1038,11 @@ morphology_code,preferred_term
 9891/3,Acute monocytic leukemia
 9895/3,Acute myeloid leukemia with multilineage dysplasia
 9896/3,"Acute myeloid leukemia, t(8;21)(q22;q22)"
-9897/3,"Acute myeloid leukemia, 11q23 abnomalities"
+9897/3,"Acute myeloid leukemia, 11q23 abnormalities"
 9898/1,Transient abnormal myelopoiesis (from ICD-O-3.1)
 9898/3,Myeloid leukemia associated with Down Syndrome (from ICD-O-3.1)
 9910/3,Acute megakaryoblastic leukemia
-9911/3,Acute myeloid leukemia (megakaryoblastic) with t(1;22)(p13;q13);RBM15-MLK1 (from ICD-O-3.1)
+9911/3,Acute myeloid leukemia (megakaryoblastic) with t(1;22)(p13;q13);RBM15-MKL1 (from ICD-O-3.1)
 9920/3,"Therapy-related acute myeloid leukemia, NOS"
 9930/3,Myeloid sarcoma (see also M-9861/3)
 9931/3,Acute panmyelosis with myelofibrosis (C42.1)
