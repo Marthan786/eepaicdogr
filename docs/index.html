@@ -4,8 +4,6 @@
   <meta charset="utf-8" />
   <title>ICD-O Code Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Minimal, clean styling (legible, no nonsense) -->
   <style>
     :root { --bg:#0b0b0b; --fg:#f0f0f0; --muted:#9aa0a6; --accent:#6ee7ff; --card:#151515; --border:#2a2a2a; }
     * { box-sizing: border-box; }
@@ -35,50 +33,36 @@
       .row { grid-template-columns: 1fr; }
     }
   </style>
-
-  <!-- PapaParse needed for CSV parsing -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>ICD-O Code Builder</h1>
-  </header>
-
+  <header><h1>ICD-O Code Builder</h1></header>
   <main>
     <div class="card span-12 status">
-      CSV paths tried: <code>data/</code> and <code>docs/data/</code>.
-      If your dropdowns are empty, make sure your files exist at:
-      <code>data/icdo_topography.csv</code>, <code>data/icdo_morphology.csv</code> or
-      <code>docs/data/icdo_topography.csv</code>, <code>docs/data/icdo_morphology.csv</code>.
+      CSVs are loaded from <code>data/</code> or <code>docs/data/</code> automatically.
+      If names don’t appear, your file likely lacks a name column. This page now also
+      stitches multi-cell names and understands Greek headers.
     </div>
 
     <form id="icdoForm" class="grid">
-      <!-- Filters -->
       <div class="card span-6">
         <label for="filter_topo">Search Topography</label>
         <input id="filter_topo" type="text" placeholder="Type to filter (e.g., breast, lung, C50)" />
-        <div class="hint">Press Enter to select top result. Escape clears.</div>
+        <div class="hint">Enter selects top result. Escape clears.</div>
       </div>
-
       <div class="card span-6">
         <label for="filter_morph">Search Morphology</label>
         <input id="filter_morph" type="text" placeholder="Type to filter (e.g., adenocarcinoma, 8500)" />
-        <div class="hint">Press Enter to select top result. Escape clears.</div>
+        <div class="hint">Enter selects top result. Escape clears.</div>
       </div>
 
-      <!-- Selects -->
       <div class="card span-6">
         <label for="topography">Topography</label>
-        <select id="topography">
-          <option value="">— choose topography —</option>
-        </select>
+        <select id="topography"><option value="">— choose topography —</option></select>
       </div>
-
       <div class="card span-6">
         <label for="morphology">Morphology</label>
-        <select id="morphology">
-          <option value="">— choose morphology —</option>
-        </select>
+        <select id="morphology"><option value="">— choose morphology —</option></select>
       </div>
 
       <div class="card span-6">
@@ -99,7 +83,6 @@
         <select id="laterality"></select>
       </div>
 
-      <!-- Output -->
       <div class="card span-12">
         <div class="row">
           <div>
@@ -124,27 +107,22 @@
   </main>
 
   <script>
-    // Shortcuts
     const $ = s => document.querySelector(s);
     const opt = (v,t)=>{const o=document.createElement("option");o.value=v;o.textContent=t;return o;};
-
-    // Globals
     let topoAll=[], morphAll=[];
 
-    // Utils
     function norm(x){return String(x||"").trim().replace(/\s+/g," ").replace(/[–—]/g,"-");}
 
-    // Attempt multiple paths (works whether Publish Directory is "/" or "docs/")
     async function loadCSVAny(paths){
       for (const path of paths){
         try {
           const res = await fetch(path, { cache: "no-store" });
-          if (!res.ok) { continue; }
+          if (!res.ok) continue;
           const text = await res.text();
           return new Promise(resolve =>
             Papa.parse(text, { header:false, skipEmptyLines:true, complete:r=>resolve(r.data) })
           );
-        } catch { /* try next */ }
+        } catch {}
       }
       throw new Error("Fetch failed for: " + paths.join(", "));
     }
@@ -176,29 +154,74 @@
       return "";
     }
 
-    function guessMorphCode(row){
-      const rx = /\b(\d{4})(?:\/\d)?\b/;
+    // New: robust multi-cell morphology name extraction with Unicode letters (Greek-friendly)
+    function robustMorphFromRow(row){
+      // 1) if any cell is "8500/3 - Adenocarcinoma, NOS"
       for(const cell of row){
-        const m = String(cell||"").match(rx);
-        if(m) return m[1];
+        const s = String(cell||"");
+        const m = s.match(/^(\d{4})(?:\/\d)?\s*[-–—]?\s*(.+)$/);
+        if (m) return { code: m[1], name: norm(m[2]) };
       }
-      return "";
+
+      // 2) find first 4-digit code anywhere
+      const codeIdx = row.findIndex(c => /\b\d{4}\b/.test(String(c||"")));
+      if (codeIdx < 0) return null;
+      const code = String(row[codeIdx]).match(/\b(\d{4})\b/)[1];
+
+      // helper: is a plausible text token (has any Unicode letter)
+      const hasLetters = s => /[\p{L}]/u.test(s);
+
+      // 3) collect text fragments AFTER code, skipping numbers/behaviors/codes
+      const parts = [];
+      for (let j = codeIdx + 1; j < row.length; j++){
+        const s = norm(row[j]);
+        if (!s) continue;
+        if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;   // skip other codes
+        if (/^[0-9/.\-]+$/.test(s)) continue;         // pure numeric/behavior junk
+        if (!hasLetters(s)) continue;                 // no letters, no name
+        parts.push(s);
+      }
+      if (parts.length){
+        return { code, name: norm(parts.join(" ")) };
+      }
+
+      // 4) try BEFORE code (sometimes name is left of code)
+      const leftParts = [];
+      for (let j = codeIdx - 1; j >= 0; j--){
+        const s = norm(row[j]);
+        if (!s) continue;
+        if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
+        if (/^[0-9/.\-]+$/.test(s)) continue;
+        if (!hasLetters(s)) continue;
+        leftParts.unshift(s);
+      }
+      if (leftParts.length){
+        return { code, name: norm(leftParts.join(" ")) };
+      }
+
+      // 5) Hail Mary: pick the cell with the most letters across the row
+      let best = "";
+      for (const cell of row){
+        const s = norm(cell);
+        if (!hasLetters(s)) continue;
+        if (s.length > best.length) best = s;
+      }
+      return best ? { code, name: best } : null;
     }
 
-    // Filtered select
     function setupFilter(inputId, selectEl, all, placeholder){
       const input = $("#"+inputId);
       function rebuild(list){
         const prev = selectEl.value;
         selectEl.innerHTML="";
         selectEl.appendChild(opt("", placeholder));
-        list.forEach(x=> selectEl.appendChild(opt(x.code, `${x.code} — ${x.name}`)));
+        list.forEach(x=> selectEl.appendChild(opt(x.code, `${x.code} — ${x.name || "(no name)"}`)));
         if ([...selectEl.options].some(o=>o.value===prev)) selectEl.value=prev;
       }
       function filter(q){
         const n=q.trim().toLowerCase();
         if(!n){rebuild(all); return;}
-        const out=all.filter(x=>(x.code+" "+x.name).toLowerCase().includes(n));
+        const out=all.filter(x=>(x.code+" "+(x.name||"")).toLowerCase().includes(n));
         rebuild(out);
       }
       input.addEventListener("input",()=>filter(input.value));
@@ -213,7 +236,6 @@
       rebuild(all);
     }
 
-    // Load and parse data
     async function loadData(){
       const status = $("#statusLine");
       status.textContent = "Loading CSVs...";
@@ -226,9 +248,9 @@
 
       const th = trows[0] || [];
       const topoCodeIdx = pickCol(th, ["topography code","topo code","site code","code","icd-o","icdo","icd o"]);
-      const topoNameIdx = pickCol(th, ["topography name","topo name","site name","site","name","description","label","term","preferred term"]);
+      const topoNameIdx = pickCol(th, ["topography name","topo name","site name","site","name","description","label","term","preferred term","όνομα","ονομασία","όρος","προτιμώμενος όρος"]);
 
-      topoAll = trows.slice(1).map(row=>{
+      topoAll = (trows.slice(1)).map(row=>{
         if(topoCodeIdx>=0 && topoNameIdx>=0 && topoCodeIdx!==topoNameIdx){
           const code = norm(row[topoCodeIdx]||"");
           const name = norm(row[topoNameIdx]||"");
@@ -250,7 +272,7 @@
         return nameGuess ? {code:codeGuess, name:nameGuess} : null;
       }).filter(Boolean);
 
-      // ---- MORPHOLOGY (robust) ----
+      // ---- MORPHOLOGY (very robust) ----
       const mrows = await loadCSVAny([
         "data/icdo_morphology.csv",
         "docs/data/icdo_morphology.csv"
@@ -258,58 +280,34 @@
 
       const mh = mrows[0] || [];
       const morphCodeIdx = pickCol(mh, ["morphology code","morph code","code","icd-o","icdo","icd o","morph"]);
-      const morphNameIdx = pickCol(mh, ["morphology name","morph name","name","description","label","term","preferred term","histology","diagnosis","who","english","greek"]);
+      const morphNameIdx = pickCol(mh, [
+        "morphology name","morph name","name","description","label","term","preferred term",
+        "histology","diagnosis","who","english","greek",
+        "όνομα","ονομασία","όρος","προτιμώμενος όρος","ιστολογία","διάγνωση"
+      ]);
 
-      function extractMorph(row){
-        const codeIdx = row.findIndex(c => /\b\d{4}\b/.test(String(c||"")));
-        if (codeIdx < 0) return null;
-        const code = String(row[codeIdx]).match(/\b(\d{4})\b/)[1];
-
-        // Prefer a textual cell AFTER the code
-        for (let j = codeIdx + 1; j < row.length; j++){
-          const s = norm(row[j]);
-          if (!s) continue;
-          if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue; // skip codes like 8500/3
-          if (/^[0-9]$/.test(s)) continue;            // skip stray digits
-          return { code, name: s };
-        }
-        // Try BEFORE the code
-        for (let j = 0; j < codeIdx; j++){
-          const s = norm(row[j]);
-          if (!s) continue;
-          if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
-          if (/^[0-9]$/.test(s)) continue;
-          return { code, name: s };
-        }
-        return null;
-      }
-
-      const looksLikeHeader = mh.some(h => /code|morph|name|term|histology/i.test(String(h||"")));
+      const looksLikeHeader = mh.some(h => /code|morph|name|term|histology|όνομα|ονομασία|όρος|ιστολογία|διάγνωση/i.test(String(h||"")));
       const mDataRows = looksLikeHeader ? mrows.slice(1) : mrows;
 
       morphAll = mDataRows.map(row=>{
+        // Header-driven happy path
         if (morphCodeIdx>=0 && morphNameIdx>=0 && morphCodeIdx!==morphNameIdx){
           const code = norm(row[morphCodeIdx]||"").match(/\b(\d{4})\b/)?.[1] || "";
           const name = norm(row[morphNameIdx]||"");
-          return code && name ? {code, name} : null;
+          return code && name ? {code, name} : (code ? {code, name:""} : null);
         }
-        for (const cell of row){
-          const s = String(cell||"");
-          const m = s.match(/^(\d{4})(?:\/\d)?\s*[-–—]?\s*(.+)$/);
-          if (m) return { code: m[1], name: norm(m[2]) };
-        }
-        return extractMorph(row);
+        // Heuristics across messy rows
+        return robustMorphFromRow(row);
       }).filter(Boolean);
 
-      // Populate selects
       const topoSel=$("#topography"), morphSel=$("#morphology");
       topoSel.innerHTML=""; morphSel.innerHTML="";
       topoSel.appendChild(opt("","— choose topography —"));
       morphSel.appendChild(opt("","— choose morphology —"));
       topoAll.forEach(t=> topoSel.appendChild(opt(t.code, `${t.code} — ${t.name}`)));
-      morphAll.forEach(m=> morphSel.appendChild(opt(m.code, `${m.code} — ${m.name}`)));
+      morphAll.forEach(m=> morphSel.appendChild(opt(m.code, `${m.code} — ${m.name || "(no name found)"}`)));
 
-      // Behavior, Grade, Laterality
+      // Controls
       const beh=$("#behavior"); beh.innerHTML="";
       [
         {v:"",t:"— choose behavior —"},
@@ -333,14 +331,14 @@
       const lat=$("#laterality"); lat.innerHTML="";
       ["","Right","Left","Bilateral","Not applicable"].forEach(x=>lat.appendChild(opt(x, x||"(none)")));
 
-      // Type-to-filter hookup
       setupFilter("filter_topo", topoSel, topoAll, "— choose topography —");
       setupFilter("filter_morph", morphSel, morphAll, "— choose morphology —");
 
-      status.textContent = `Loaded ${topoAll.length} topography entries and ${morphAll.length} morphology entries.`;
+      const noNameCount = morphAll.filter(m => !m.name).length;
+      status.textContent = `Loaded ${topoAll.length} topography entries and ${morphAll.length} morphology entries`
+        + (noNameCount ? ` (${noNameCount} without names; likely missing name column).` : ".");
     }
 
-    // Form behaviors
     function setupForm(){
       $("#icdoForm").addEventListener("submit",(e)=>{
         e.preventDefault();
@@ -373,7 +371,6 @@
       });
     }
 
-    // Boot
     (async function(){
       if (typeof Papa === "undefined") {
         alert("PapaParse failed to load. Check the CDN script tag.");
@@ -391,4 +388,5 @@
   </script>
 </body>
 </html>
+
 
