@@ -155,59 +155,60 @@
     }
 
     // New: robust multi-cell morphology name extraction with Unicode letters (Greek-friendly)
-    function robustMorphFromRow(row){
-      // 1) if any cell is "8500/3 - Adenocarcinoma, NOS"
-      for(const cell of row){
-        const s = String(cell||"");
-        const m = s.match(/^(\d{4})(?:\/\d)?\s*[-–—]?\s*(.+)$/);
-        if (m) return { code: m[1], name: norm(m[2]) };
-      }
+// works in all browsers
+function robustMorphFromRow(row){
+  // 1) "8500/3 - Adenocarcinoma, NOS"
+  for(const cell of row){
+    const s = String(cell||"");
+    const m = s.match(/^(\d{4})(?:\/\d)?\s*[-–—]?\s*(.+)$/);
+    if (m) return { code: m[1], name: norm(m[2]) };
+  }
 
-      // 2) find first 4-digit code anywhere
-      const codeIdx = row.findIndex(c => /\b\d{4}\b/.test(String(c||"")));
-      if (codeIdx < 0) return null;
-      const code = String(row[codeIdx]).match(/\b(\d{4})\b/)[1];
+  // 2) find first 4-digit code
+  const codeIdx = row.findIndex(c => /\b\d{4}\b/.test(String(c||"")));
+  if (codeIdx < 0) return null;
+  const code = String(row[codeIdx]).match(/\b(\d{4})\b/)[1];
 
-      // helper: is a plausible text token (has any Unicode letter)
-      const hasLetters = s => /[\p{L}]/u.test(s);
+  // helper: is a plausible text token (has at least one letter A–Zα–ω)
+  const hasLetters = s => /[A-Za-zΑ-Ωα-ω]/.test(s);
 
-      // 3) collect text fragments AFTER code, skipping numbers/behaviors/codes
-      const parts = [];
-      for (let j = codeIdx + 1; j < row.length; j++){
-        const s = norm(row[j]);
-        if (!s) continue;
-        if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;   // skip other codes
-        if (/^[0-9/.\-]+$/.test(s)) continue;         // pure numeric/behavior junk
-        if (!hasLetters(s)) continue;                 // no letters, no name
-        parts.push(s);
-      }
-      if (parts.length){
-        return { code, name: norm(parts.join(" ")) };
-      }
+  // 3) collect text fragments AFTER code
+  const parts = [];
+  for (let j = codeIdx + 1; j < row.length; j++){
+    const s = norm(row[j]);
+    if (!s) continue;
+    if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
+    if (/^[0-9/.\-]+$/.test(s)) continue;
+    if (!hasLetters(s)) continue;
+    parts.push(s);
+  }
+  if (parts.length){
+    return { code, name: norm(parts.join(" ")) };
+  }
 
-      // 4) try BEFORE code (sometimes name is left of code)
-      const leftParts = [];
-      for (let j = codeIdx - 1; j >= 0; j--){
-        const s = norm(row[j]);
-        if (!s) continue;
-        if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
-        if (/^[0-9/.\-]+$/.test(s)) continue;
-        if (!hasLetters(s)) continue;
-        leftParts.unshift(s);
-      }
-      if (leftParts.length){
-        return { code, name: norm(leftParts.join(" ")) };
-      }
+  // 4) try BEFORE code
+  const leftParts = [];
+  for (let j = codeIdx - 1; j >= 0; j--){
+    const s = norm(row[j]);
+    if (!s) continue;
+    if (/\b\d{4}(?:\/\d)?\b/.test(s)) continue;
+    if (/^[0-9/.\-]+$/.test(s)) continue;
+    if (!hasLetters(s)) continue;
+    leftParts.unshift(s);
+  }
+  if (leftParts.length){
+    return { code, name: norm(leftParts.join(" ")) };
+  }
 
-      // 5) Hail Mary: pick the cell with the most letters across the row
-      let best = "";
-      for (const cell of row){
-        const s = norm(cell);
-        if (!hasLetters(s)) continue;
-        if (s.length > best.length) best = s;
-      }
-      return best ? { code, name: best } : null;
-    }
+  // 5) pick longest textual cell
+  let best = "";
+  for (const cell of row){
+    const s = norm(cell);
+    if (!hasLetters(s)) continue;
+    if (s.length > best.length) best = s;
+  }
+  return best ? { code, name: best } : null;
+}
 
     function setupFilter(inputId, selectEl, all, placeholder){
       const input = $("#"+inputId);
