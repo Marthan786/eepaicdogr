@@ -37,6 +37,7 @@
       padding:16px;
       box-shadow: 0 1px 0 rgba(0,0,0,0.02);
     }
+    .span-3{ grid-column: span 3; }
     .span-6{ grid-column: span 6; }
     .span-12{ grid-column: span 12; }
     label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
@@ -71,6 +72,7 @@
     a{ color:var(--accent); text-decoration:none; }
     a:hover{ text-decoration:underline; }
     @media (max-width: 900px){
+      .span-3{ grid-column: span 12; }
       .span-6{ grid-column: span 12; }
       .row{ grid-template-columns: 1fr; }
     }
@@ -79,58 +81,67 @@
 </head>
 <body>
   <main>
+    <!-- Language switcher (no header) -->
+    <div class="card span-3">
+      <label id="lbl_lang">Language</label>
+      <select id="lang">
+        <option value="en">English</option>
+        <option value="el">Ελληνικά</option>
+      </select>
+    </div>
+
     <form id="icdoForm" class="grid">
       <div class="card span-6">
-        <label for="filter_topo">Search Topography</label>
+        <label id="lbl_filter_topo" for="filter_topo">Search Topography</label>
         <input id="filter_topo" type="text" placeholder="Type to filter (e.g., breast, lung, C50)" />
-        <div class="hint">Enter selects top result. Escape clears.</div>
+        <div id="hint_filter_topo" class="hint">Enter selects top result. Escape clears.</div>
       </div>
       <div class="card span-6">
-        <label for="filter_morph">Search Morphology</label>
+        <label id="lbl_filter_morph" for="filter_morph">Search Morphology</label>
         <input id="filter_morph" type="text" placeholder="Type to filter (e.g., adenocarcinoma, 8500)" />
-        <div class="hint">Enter selects top result. Escape clears.</div>
+        <div id="hint_filter_morph" class="hint">Enter selects top result. Escape clears.</div>
       </div>
 
       <div class="card span-6">
-        <label for="topography">Topography</label>
+        <label id="lbl_topography" for="topography">Topography</label>
         <select id="topography"><option value="">— choose topography —</option></select>
       </div>
       <div class="card span-6">
-        <label for="morphology">Morphology</label>
+        <label id="lbl_morphology" for="morphology">Morphology</label>
         <select id="morphology"><option value="">— choose morphology —</option></select>
       </div>
 
       <div class="card span-6">
         <div class="row">
           <div>
-            <label for="behavior">Behavior</label>
+            <label id="lbl_behavior" for="behavior">Behavior</label>
             <select id="behavior"></select>
           </div>
           <div>
-            <label for="grade">Grade</label>
+            <label id="lbl_grade" for="grade">Grade</label>
             <select id="grade"></select>
           </div>
         </div>
       </div>
 
       <div class="card span-6">
-        <label for="laterality">Laterality</label>
+        <label id="lbl_laterality" for="laterality">Laterality</label>
         <select id="laterality"></select>
       </div>
 
       <div class="card span-12">
         <div class="row">
           <div>
-            <label>Final ICD-O Code</label>
+            <label id="lbl_final">Final ICD-O Code</label>
             <div id="resultCode">— your code will appear here —</div>
           </div>
           <div>
-            <label>Parts</label>
+            <label id="lbl_parts">Parts</label>
             <div id="partsLine" class="hint"></div>
           </div>
         </div>
         <div class="btns" style="margin-top:12px;">
-          <button type="submit">Compose</button>
+          <button type="submit" id="btn_compose">Compose</button>
           <button type="button" id="copyBtn">Copy</button>
           <button type="button" id="resetBtn">Reset</button>
           <span id="copied">Copied</span>
@@ -142,8 +153,109 @@
   <script>
     const $ = s => document.querySelector(s);
     const opt = (v,t)=>{const o=document.createElement("option");o.value=v;o.textContent=t;return o;};
-    let topoAll=[], morphAll=[];
 
+    // Language data
+    const i18n = {
+      en: {
+        title: "ICD-O Code Builder",
+        language: "Language",
+        search_topo_label: "Search Topography",
+        search_topo_ph: "Type to filter (e.g., breast, lung, C50)",
+        search_morph_label: "Search Morphology",
+        search_morph_ph: "Type to filter (e.g., adenocarcinoma, 8500)",
+        hint_enter: "Enter selects top result. Escape clears.",
+        topography_label: "Topography",
+        morphology_label: "Morphology",
+        behavior_label: "Behavior",
+        grade_label: "Grade",
+        laterality_label: "Laterality",
+        final_label: "Final ICD-O Code",
+        parts_label: "Parts",
+        choose_topography: "— choose topography —",
+        choose_morphology: "— choose morphology —",
+        choose_behavior: "— choose behavior —",
+        behaviors: {
+          "": "— choose behavior —",
+          "0": "0 — Benign",
+          "1": "1 — Uncertain",
+          "2": "2 — In situ",
+          "3": "3 — Malignant, primary",
+          "6": "6 — Malignant, metastatic",
+          "9": "9 — Malignant, uncertain"
+        },
+        grades: [
+          ["", "(none)"],
+          ["1","1 — Well differentiated"],
+          ["2","2 — Moderately differentiated"],
+          ["3","3 — Poorly differentiated"],
+          ["4","4 — Undifferentiated"]
+        ],
+        lateralities: ["","Right","Left","Bilateral","Not applicable"],
+        btn_compose: "Compose",
+        btn_copy: "Copy",
+        btn_reset: "Reset",
+        copied: "Copied",
+        must_choose: "Choose Topography, Morphology and Behavior.",
+        copy_failed: "Copy failed. Select and press Ctrl+C.",
+        code_placeholder: "— your code will appear here —",
+        parts_topo: "Topography",
+        parts_morph: "Morphology",
+        parts_grade: "grade",
+        parts_lat: "Laterality"
+      },
+      el: {
+        title: "ICD-O Δημιουργία Κωδικού",
+        language: "Γλώσσα",
+        search_topo_label: "Αναζήτηση Τοπογραφίας",
+        search_topo_ph: "Πληκτρολογήστε (π.χ. breast, lung, C50)",
+        search_morph_label: "Αναζήτηση Μορφολογίας",
+        search_morph_ph: "Πληκτρολογήστε (π.χ. adenocarcinoma, 8500)",
+        hint_enter: "Enter επιλέγει το πρώτο αποτέλεσμα. Escape καθαρίζει.",
+        topography_label: "Τοπογραφία",
+        morphology_label: "Μορφολογία",
+        behavior_label: "Συμπεριφορά",
+        grade_label: "Βαθμός",
+        laterality_label: "Πλευρικότητα",
+        final_label: "Τελικός κωδικός ICD-O",
+        parts_label: "Συστατικά",
+        choose_topography: "— επιλέξτε τοπογραφία —",
+        choose_morphology: "— επιλέξτε μορφολογία —",
+        choose_behavior: "— επιλέξτε συμπεριφορά —",
+        behaviors: {
+          "": "— επιλέξτε συμπεριφορά —",
+          "0": "0 — Καλοήθης",
+          "1": "1 — Απροσδιόριστη καλοήθης/κακοήθης",
+          "2": "2 — Επί τόπου (in situ)",
+          "3": "3 — Κακοήθης, πρωτοπαθής",
+          "6": "6 — Κακοήθης, μεταστατικός",
+          "9": "9 — Κακοήθης, αδιευκρίνιστη"
+        },
+        grades: [
+          ["", "(κανένα)"],
+          ["1","1 — Καλά διαφοροποιημένος"],
+          ["2","2 — Μέτρια διαφοροποιημένος"],
+          ["3","3 — Πτωχά διαφοροποιημένος"],
+          ["4","4 — Αδιαφοροποίητος"]
+        ],
+        lateralities: ["","Δεξιά","Αριστερά","Αμφοτερόπλευρα","Μη εφαρμόσιμο"],
+        btn_compose: "Σύνθεση",
+        btn_copy: "Αντιγραφή",
+        btn_reset: "Επαναφορά",
+        copied: "Αντιγράφηκε",
+        must_choose: "Επιλέξτε Τοπογραφία, Μορφολογία και Συμπεριφορά.",
+        copy_failed: "Αποτυχία αντιγραφής. Επιλέξτε και πατήστε Ctrl+C.",
+        code_placeholder: "— ο κωδικός θα εμφανιστεί εδώ —",
+        parts_topo: "Τοπογραφία",
+        parts_morph: "Μορφολογία",
+        parts_grade: "βαθμός",
+        parts_lat: "Πλευρικότητα"
+      }
+    };
+
+    // Placeholders used inside filters (updated on language change)
+    const placeholders = { topo:"", morph:"" };
+
+    let topoAll=[], morphAll=[];
     function norm(x){return String(x||"").trim().replace(/\s+/g," ").replace(/[–—]/g,"-");}
 
     async function loadCSVAny(paths){
@@ -187,7 +299,6 @@
       return "";
     }
 
-    // Robust multi-cell morphology name extraction
     function robustMorphFromRow(row){
       for(const cell of row){
         const s = String(cell||"");
@@ -230,12 +341,13 @@
       return best ? { code, name: best } : null;
     }
 
-    function setupFilter(inputId, selectEl, all, placeholder){
+    // Filters with language-aware placeholders
+    function setupFilter(inputId, selectEl, all, placeholderKey){
       const input = $("#"+inputId);
       function rebuild(list){
         const prev = selectEl.value;
         selectEl.innerHTML="";
-        selectEl.appendChild(opt("", placeholder));
+        selectEl.appendChild(opt("", placeholders[placeholderKey] || ""));
         list.forEach(x=> selectEl.appendChild(opt(x.code, `${x.code} — ${x.name || "(no name)"}`)));
         if ([...selectEl.options].some(o=>o.value===prev)) selectEl.value=prev;
       }
@@ -254,6 +366,8 @@
           e.preventDefault();
         }
       });
+      // expose a trigger to rebuild on language change
+      selectEl._rebuildForLang = ()=>rebuild(all);
       rebuild(all);
     }
 
@@ -263,7 +377,6 @@
         "data/icdo_topography.csv",
         "docs/data/icdo_topography.csv"
       ]);
-
       const th = trows[0] || [];
       const topoCodeIdx = pickCol(th, ["topography code","topo code","site code","code","icd-o","icdo","icd o"]);
       const topoNameIdx = pickCol(th, ["topography name","topo name","site name","site","name","description","label","term","preferred term","όνομα","ονομασία","όρος","προτιμώμενος όρος"]);
@@ -295,7 +408,6 @@
         "data/icdo_morphology.csv",
         "docs/data/icdo_morphology.csv"
       ]);
-
       const mh = mrows[0] || [];
       const morphCodeIdx = pickCol(mh, ["morphology code","morph code","code","icd-o","icdo","icd o","morph"]);
       const morphNameIdx = pickCol(mh, [
@@ -303,7 +415,6 @@
         "histology","diagnosis","who","english","greek",
         "όνομα","ονομασία","όρος","προτιμώμενος όρος","ιστολογία","διάγνωση"
       ]);
-
       const looksLikeHeader = mh.some(h => /code|morph|name|term|histology|όνομα|ονομασία|όρος|ιστολογία|διάγνωση/i.test(String(h||"")));
       const mDataRows = looksLikeHeader ? mrows.slice(1) : mrows;
 
@@ -316,71 +427,135 @@
         return robustMorphFromRow(row);
       }).filter(Boolean);
 
-      // Build selects
       const topoSel=$("#topography"), morphSel=$("#morphology");
       topoSel.innerHTML=""; morphSel.innerHTML="";
-      topoSel.appendChild(opt("","— choose topography —"));
-      morphSel.appendChild(opt("","— choose morphology —"));
+      topoSel.appendChild(opt("","")); // placeholder filled by language apply
+      morphSel.appendChild(opt("",""));
+
       topoAll.forEach(t=> topoSel.appendChild(opt(t.code, `${t.code} — ${t.name}`)));
       morphAll.forEach(m=> morphSel.appendChild(opt(m.code, `${m.code} — ${m.name || "(no name found)"}`)));
 
-      // Controls
-      const beh=$("#behavior"); beh.innerHTML="";
-      [
-        {v:"",t:"— choose behavior —"},
-        {v:"0",t:"0 — Benign"},
-        {v:"1",t:"1 — Uncertain"},
-        {v:"2",t:"2 — In situ"},
-        {v:"3",t:"3 — Malignant, primary"},
-        {v:"6",t:"6 — Malignant, metastatic"},
-        {v:"9",t:"9 — Malignant, uncertain"}
-      ].forEach(o=>beh.appendChild(opt(o.v,o.t)));
+      // Controls (built during language apply to get translated labels)
+    }
 
-      const grd=$("#grade"); grd.innerHTML="";
-      [
-        {v:"",t:"(none)"},
-        {v:"1",t:"1 — Well differentiated"},
-        {v:"2",t:"2 — Moderately differentiated"},
-        {v:"3",t:"3 — Poorly differentiated"},
-        {v:"4",t:"4 — Undifferentiated"}
-      ].forEach(o=>grd.appendChild(opt(o.v,o.t)));
+    function buildBehaviorSelect(lang){
+      const beh=$("#behavior");
+      const cur = beh.value;
+      beh.innerHTML="";
+      const map = i18n[lang].behaviors;
+      Object.keys(map).forEach(v=> beh.appendChild(opt(v, map[v])));
+      if ([...beh.options].some(o=>o.value===cur)) beh.value=cur;
+    }
+    function buildGradeSelect(lang){
+      const grd=$("#grade");
+      const cur = grd.value;
+      grd.innerHTML="";
+      i18n[lang].grades.forEach(([v,t])=> grd.appendChild(opt(v,t)));
+      if ([...grd.options].some(o=>o.value===cur)) grd.value=cur;
+    }
+    function buildLateralitySelect(lang){
+      const lat=$("#laterality");
+      const cur = lat.value;
+      lat.innerHTML="";
+      i18n[lang].lateralities.forEach(x=> lat.appendChild(opt(x, x||"(none)")));
+      if ([...lat.options].some(o=>o.value===cur)) lat.value=cur;
+    }
 
-      const lat=$("#laterality"); lat.innerHTML="";
-      ["","Right","Left","Bilateral","Not applicable"].forEach(x=>lat.appendChild(opt(x, x||"(none)")));
+    function applyLang(lang){
+      // Title
+      document.title = i18n[lang].title;
+      $("#lbl_lang").textContent = i18n[lang].language;
 
-      setupFilter("filter_topo", topoSel, topoAll, "— choose topography —");
-      setupFilter("filter_morph", morphSel, morphAll, "— choose morphology —");
+      // Labels
+      $("#lbl_filter_topo").textContent = i18n[lang].search_topo_label;
+      $("#filter_topo").placeholder = i18n[lang].search_topo_ph;
+      $("#hint_filter_topo").textContent = i18n[lang].hint_enter;
+
+      $("#lbl_filter_morph").textContent = i18n[lang].search_morph_label;
+      $("#filter_morph").placeholder = i18n[lang].search_morph_ph;
+      $("#hint_filter_morph").textContent = i18n[lang].hint_enter;
+
+      $("#lbl_topography").textContent = i18n[lang].topography_label;
+      $("#lbl_morphology").textContent = i18n[lang].morphology_label;
+      $("#lbl_behavior").textContent = i18n[lang].behavior_label;
+      $("#lbl_grade").textContent = i18n[lang].grade_label;
+      $("#lbl_laterality").textContent = i18n[lang].laterality_label;
+      $("#lbl_final").textContent = i18n[lang].final_label;
+      $("#lbl_parts").textContent = i18n[lang].parts_label;
+
+      // Buttons
+      $("#btn_compose").textContent = i18n[lang].btn_compose;
+      $("#copyBtn").textContent = i18n[lang].btn_copy;
+      $("#resetBtn").textContent = i18n[lang].btn_reset;
+      $("#copied").textContent = i18n[lang].copied;
+
+      // Placeholders for selects
+      placeholders.topo = i18n[lang].choose_topography;
+      placeholders.morph = i18n[lang].choose_morphology;
+      // refresh first option text for both selects
+      const topoSel=$("#topography"), morphSel=$("#morphology");
+      if (topoSel.options.length) topoSel.options[0].textContent = placeholders.topo;
+      if (morphSel.options.length) morphSel.options[0].textContent = placeholders.morph;
+      // trigger rebuild for filters so placeholder line refreshes
+      topoSel._rebuildForLang && topoSel._rebuildForLang();
+      morphSel._rebuildForLang && morphSel._rebuildForLang();
+
+      // Rebuild translated selects
+      buildBehaviorSelect(lang);
+      buildGradeSelect(lang);
+      buildLateralitySelect(lang);
+
+      // Reset result placeholders to current language if empty
+      if (!$("#resultCode").textContent.trim() || $("#resultCode").textContent.includes("will appear") || $("#resultCode").textContent.includes("εμφανιστεί")){
+        $("#resultCode").textContent = i18n[lang].code_placeholder;
+      }
     }
 
     function setupForm(){
       $("#icdoForm").addEventListener("submit",(e)=>{
         e.preventDefault();
+        const lang = $("#lang").value || "en";
         const topo=$("#topography").value, morph=$("#morphology").value, beh=$("#behavior").value;
         const grade=$("#grade").value, lat=$("#laterality").value;
-        if(!topo || !morph || !beh){ alert("Choose Topography, Morphology and Behavior."); return; }
+        if(!topo || !morph || !beh){ alert(i18n[lang].must_choose); return; }
         const morphFull = grade ? `${morph}/${beh}${grade}` : `${morph}/${beh}`;
-        const final = `${topo} ${morphFull}${lat? " — "+lat : ""}`;
+        const latText = lat || "";
+        const final = `${topo} ${morphFull}${latText? " — "+latText : ""}`;
         $("#resultCode").textContent = final;
 
         const topoText=$("#topography").selectedOptions[0]?.textContent||"";
         const morphText=$("#morphology").selectedOptions[0]?.textContent||"";
-        $("#partsLine").textContent = `Topography: ${topoText} | Morphology: ${morphText} → ${morphFull}${grade? " (grade "+grade+")":""}${lat? " | Laterality: "+lat:""}`;
+        const gradeBit = grade ? ` (${i18n[lang].parts_grade} ${grade})` : "";
+        const latBit = latText ? ` | ${i18n[lang].parts_lat}: ${latText}` : "";
+        $("#partsLine").textContent =
+          `${i18n[lang].parts_topo}: ${topoText} | ${i18n[lang].parts_morph}: ${morphText} → ${morphFull}${gradeBit}${latBit}`;
       });
 
       $("#resetBtn").addEventListener("click",()=>{
+        const lang = $("#lang").value || "en";
         $("#icdoForm").reset();
-        $("#resultCode").textContent="— your code will appear here —";
-        $("#partsLine").textContent="";
+        $("#resultCode").textContent = i18n[lang].code_placeholder;
+        $("#partsLine").textContent = "";
+        // keep language select value
+        $("#lang").value = lang;
       });
 
       $("#copyBtn").addEventListener("click", async ()=>{
+        const lang = $("#lang").value || "en";
         const t=$("#resultCode").textContent.trim();
-        if(!t || t.includes("will")) return;
+        if(!t || t===i18n[lang].code_placeholder) return;
         try{
           await navigator.clipboard.writeText(t);
-          const ok=$("#copied"); ok.style.display="inline";
+          const ok=$("#copied"); ok.textContent=i18n[lang].copied; ok.style.display="inline";
           setTimeout(()=> ok.style.display="none",1200);
-        }catch{ alert("Copy failed. Select and press Ctrl+C."); }
+        }catch{ alert(i18n[lang].copy_failed); }
+      });
+
+      // Language change
+      $("#lang").addEventListener("change", ()=>{
+        const lang = $("#lang").value;
+        localStorage.setItem("lang", lang);
+        applyLang(lang);
       });
     }
 
@@ -389,13 +564,21 @@
         alert("PapaParse failed to load. Check the CDN script tag.");
         return;
       }
+      // Initialize language preference
+      const saved = localStorage.getItem("lang");
+      const initialLang = saved ? saved : (navigator.language||"en").toLowerCase().startsWith("el") ? "el" : "en";
+      $("#lang").value = initialLang;
+
+      // Load data and set up filters
+      await loadData();
+
+      // Set up filters with language-aware placeholders
+      setupFilter("filter_topo", $("#topography"), topoAll, "topo");
+      setupFilter("filter_morph", $("#morphology"), morphAll, "morph");
+
+      // Build form controls and apply language
       setupForm();
-      try {
-        await loadData();
-      } catch (err) {
-        console.error(err);
-        alert("Failed to load CSVs from /data or /docs/data. Ensure files exist and are UTF-8.");
-      }
+      applyLang(initialLang);
     })();
   </script>
 </body>
