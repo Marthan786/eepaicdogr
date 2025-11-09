@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ICD-O Code Builder (EEPA)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f3efe7; --card:#fff; --border:#d9d3c7; --text:#222; --muted:#6b6b6b;
+      --accent:#2c6bed; --accent-fg:#fff; --ring:rgba(44,107,237,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);font:14px/1.5 Calibri,"Segoe UI",system-ui,Arial,sans-serif;color:var(--text)}
+    .container{max-width:1100px;margin:32px auto;padding:0 16px}
+    h1{margin:0 0 6px;font-size:24px}
+    .sub{color:var(--muted);margin-bottom:18px}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:18px}
+    @media(min-width:900px){ .grid{grid-template-columns:1fr 1fr} }
+
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    label{display:block;font-weight:600;margin:12px 0 6px}
+    input,select,button{
+      width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;
+      font:14px Calibri,"Segoe UI",system-ui,Arial,sans-serif;
+    }
+    input:focus,select:focus,button:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--ring)}
+    .hint{color:var(--muted);font-size:12px;margin-top:4px}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .btn-primary{background:var(--accent);color:var(--accent-fg);border:none;cursor:pointer}
+    .btn-secondary{background:#fff;border:1px solid var(--border);cursor:pointer}
+
+    .result{grid-column:1 / -1;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .code{font-family:ui-monospace,Consolas,"Courier New",monospace;background:#0b1220;color:#e5edff;padding:12px;border-radius:10px;font-size:16px;overflow:auto}
+    .ok{color:#15803d;margin-left:6px;display:none}
+  </style>
+  <!-- CSV parser -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>ICD-O Code Builder</h1>
+    <div class="sub">Left: Topography & Morphology. Right: Behavior, Grade, Laterality. Result below. Client-only, free hosting.</div>
+
+    <form id="icdoForm">
+      <div class="grid">
+        <!-- LEFT PANEL -->
+        <div class="panel">
+          <h3 style="margin:0 0 8px;">Site & Diagnosis</h3>
+
+          <label>Filter topography</label>
+          <input id="filter_topo" type="text" placeholder="e.g., breast, thyroid, colon">
+          <label>Topography</label>
+          <select id="topography"></select>
+          <div class="hint">Pick site (e.g., C50.9 Breast).</div>
+
+          <label style="margin-top:14px;">Filter morphology</label>
+          <input id="filter_morph" type="text" placeholder="e.g., ductal, papillary, 8500">
+          <label>Morphology</label>
+          <select id="morphology"></select>
+          <div class="hint">4-digit morphology (e.g., 8500 Ductal carcinoma).</div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel">
+          <h3 style="margin:0 0 8px;">Details</h3>
+
+          <label>Behavior</label>
+          <select id="behavior"></select>
+
+          <label>Grade (optional)</label>
+          <select id="grade"></select>
+
+          <label>Laterality (optional)</label>
+          <select id="laterality"></select>
+          <div class="hint">Laterality is not part of ICD-O; shown for convenience.</div>
+
+          <div class="actions" style="margin-top:14px;">
+            <button class="btn-primary" type="submit">Get code</button>
+            <button class="btn-secondary" type="button" id="resetBtn">Reset</button>
+          </div>
+        </div>
+
+        <!-- RESULT (spans both columns) -->
+        <div class="result">
+          <label>Result</label>
+          <div class="code" id="resultCode">— your code will appear here —</div>
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn-secondary" type="button" id="copyBtn">Copy</button>
+            <span id="copied" class="ok">Copied ✓</span>
+          </div>
+          <div class="hint" id="partsLine"></div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const opt = (v,t)=>{const o=document.createElement("option");o.value=v;o.textContent=t;return o;};
+    let topoAll=[], morphAll=[];
+
+    async function loadCSV(path){
+      const res = await fetch(path,{cache:"no-store"});
+      if(!res.ok) throw new Error("Fetch failed: "+path);
+      const text = await res.text();
+      return new Promise(resolve => Papa.parse(text,{header:false,skipEmptyLines:true,complete:r=>resolve(r.data)}));
+    }
+    function norm(x){return String(x||"").trim().replace(/\s+/g," ").replace(/[–—]/g,"-");}
+    function findCols(h){
+      const L=h.map(c=>String(c||"").trim().toLowerCase());
+      let code=-1,name=-1;
+      const codeKeys=["code","icd","icdo","morph","topography","topo"];
+      const nameKeys=["name","term","label","description","site","topography"];
+      L.forEach((c,i)=>{if(code<0 && codeKeys.some(k=>c.includes(k))) code=i;});
+      L.forEach((c,i)=>{if(name<0 && nameKeys.some(k=>c.includes(k))) name=i;});
+      return {code,name};
+    }
+    function guessTopo(row){const rx=/C\d{2}(?:\.\d)?/i;for(const cell of row){const m=String(cell||"").match(rx);if(m) return m[0].toUpperCase();} return null;}
+    function guessMorph(row){const rx=/\b(\d{4})(?:\/\d)?\b/;for(const cell of row){const m=String(cell||"").match(rx);if(m) return m[1];} return null;}
+
+    function setupFilter(inputId, selectEl, all, placeholder){
+      const input = $("#"+inputId);
+      function rebuild(list){
+        const prev = selectEl.value;
+        selectEl.innerHTML=""; selectEl.appendChild(opt("", placeholder));
+        list.forEach(x=> selectEl.appendChild(opt(x.code, `${x.code} — ${x.name}`)));
+        if ([...selectEl.options].some(o=>o.value===prev)) selectEl.value=prev;
+      }
+      function filter(q){
+        const n=q.trim().toLowerCase();
+        if(!n){rebuild(all); return;}
+        const out=all.filter(x=>(x.code+" "+x.name).toLowerCase().includes(n));
+        rebuild(out);
+      }
+      input.addEventListener("input",()=>filter(input.value));
+      input.addEventListener("keydown",(e)=>{
+        if(e.key==="Escape"){input.value=""; filter(""); e.preventDefault();}
+        if(e.key==="Enter"){const first=[...selectEl.options].find((o,i)=>i>0&&o.value); if(first){selectEl.value=first.value; selectEl.dispatchEvent(new Event("change",{bubbles:true}));} e.preventDefault();}
+      });
+      rebuild(all);
+    }
+
+    async function loadData(){
+      // Topography
+      const trows = await loadCSV("data/icdo_topography.csv");
+      const th = trows[0]||[]; const tc = findCols(th);
+      topoAll = trows.slice(1).map(r=>{
+        let code = (tc.code>=0&&tc.code<r.length)? norm(r[tc.code]) : guessTopo(r)||"";
+        let name = (tc.name>=0&&tc.name<r.length)? norm(r[tc.name]) : "";
+        if(!name){ for(const cell of r){ if(cell && !/C\d{2}(\.\d)?/i.test(String(cell))) { name=norm(cell); break; } } }
+        return code&&name? {code,name}:null;
+      }).filter(Boolean);
+
+      // Morphology
+      const mrows = await loadCSV("data/icdo_morphology.csv");
+      const mh = mrows[0]||[]; const mc = findCols(mh);
+      morphAll = mrows.slice(1).map(r=>{
+        let code = (mc.code>=0&&mc.code<r.length)? norm(r[mc.code]) : guessMorph(r)||"";
+        let name = (mc.name>=0&&mc.name<r.length)? norm(r[mc.name]) : "";
+        if(!name){ for(const cell of r){ if(cell && !/\b\d{4}(?:\/\d)?\b/.test(String(cell))) { name=norm(cell); break; } } }
+        return code&&name? {code,name}:null;
+      }).filter(Boolean);
+
+      // Populate selects
+      const topoSel=$("#topography"), morphSel=$("#morphology");
+      topoSel.appendChild(opt("","— choose topography —"));
+      morphSel.appendChild(opt("","— choose morphology —"));
+      topoAll.forEach(t=> topoSel.appendChild(opt(t.code, `${t.code} — ${t.name}`)));
+      morphAll.forEach(m=> morphSel.appendChild(opt(m.code, `${m.code} — ${m.name}`)));
+
+      // Behavior, Grade, Laterality
+      const beh=$("#behavior"); beh.innerHTML="";
+      [{v:"",t:"— choose behavior —"},{v:"0",t:"0 — Benign"},{v:"1",t:"1 — Uncertain"},{v:"2",t:"2 — In situ"},{v:"3",t:"3 — Malignant, primary"},{v:"6",t:"6 — Malignant, metastatic"},{v:"9",t:"9 — Malignant, uncertain"}].forEach(o=>beh.appendChild(opt(o.v,o.t)));
+      const grd=$("#grade"); grd.innerHTML="";
+      [{v:"",t:"(none)"},{v:"1",t:"1 — Well differentiated"},{v:"2",t:"2 — Moderately differentiated"},{v:"3",t:"3 — Poorly differentiated"},{v:"4",t:"4 — Undifferentiated"}].forEach(o=>grd.appendChild(opt(o.v,o.t)));
+      const lat=$("#laterality"); lat.innerHTML="";
+      ["","Right","Left","Bilateral","Not applicable"].forEach(x=>lat.appendChild(opt(x, x||"(none)")));
+
+      // Type-to-filter hooks
+      setupFilter("filter_topo", topoSel, topoAll, "— choose topography —");
+      setupFilter("filter_morph", morphSel, morphAll, "— choose morphology —");
+    }
+
+    // Compose result
+    $("#icdoForm").addEventListener("submit",(e)=>{
+      e.preventDefault();
+      const topo=$("#topography").value, morph=$("#morphology").value, beh=$("#behavior").value;
+      const grade=$("#grade").value, lat=$("#laterality").value;
+      if(!topo || !morph || !beh){ alert("Choose Topography, Morphology and Behavior."); return; }
+      const morphFull = grade ? `${morph}/${beh}${grade}` : `${morph}/${beh}`;
+      const final = `${topo} ${morphFull}${lat? " — "+lat : ""}`;
+      $("#resultCode").textContent = final;
+
+      const topoText=$("#topography").selectedOptions[0]?.textContent||"";
+      const morphText=$("#morphology").selectedOptions[0]?.textContent||"";
+      $("#partsLine").textContent = `Topography: ${topoText} | Morphology: ${morphText} → ${morphFull}${grade? " (grade "+grade+")":""}${lat? " | Laterality: "+lat:""}`;
+    });
+
+    $("#resetBtn").addEventListener("click",()=>{
+      $("#icdoForm").reset();
+      $("#resultCode").textContent="— your code will appear here —";
+      $("#partsLine").textContent="";
+    });
+
+    $("#copyBtn").addEventListener("click", async ()=>{
+      const t=$("#resultCode").textContent.trim();
+      if(!t || t.includes("will")) return;
+      try{
+        await navigator.clipboard.writeText(t);
+        const ok=$("#copied"); ok.style.display="inline";
+        setTimeout(()=> ok.style.display="none",1200);
+      }catch{ alert("Copy failed. Select and press Ctrl+C."); }
+    });
+
+    loadData().catch(err=>{
+      console.error(err);
+      alert("Failed to load CSVs from /data. Ensure filenames and UTF-8 encoding.");
+    });
+  </script>
+</body>
+</html>
