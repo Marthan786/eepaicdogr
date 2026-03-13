@@ -42,7 +42,9 @@
     .code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
     .altlist{ display:grid; gap:8px; }
     .pill{
-      display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:999px; font-size:12px; color:#333; background:#fff;
+      display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:999px;
+      font-size:12px; color:#333; background:#fff;
+      text-align:left;
     }
     .small{ font-size:13px; }
     .status{ font-size:13px; color:#333; }
@@ -57,7 +59,7 @@
   <main>
     <h1>ICD-O Smart Code Finder</h1>
     <div class="bar">
-      <input id="query" type="text" placeholder="Type cancer + site in English or Greek (e.g., καρκίνωμα μαστού, breast adenocarcinoma)" />
+      <input id="query" type="text" placeholder="Type site + histology in English or Greek (e.g., καρκίνωμα μαστού, breast adenocarcinoma, C50.9 8500/3)" />
       <button id="go" class="primary">Find code</button>
     </div>
     <div id="status" class="status muted">Ready.</div>
@@ -93,59 +95,86 @@
   </main>
 
   <script>
-    // Config: lightweight translation endpoint
-    const LT_ENDPOINT = "https://libretranslate.com/translate"; // swap if rate-limited/CORS-blocked
-    const TIMEOUT_MS = 5000;
-
     const $ = s => document.querySelector(s);
     let topo = [], morph = [];
 
-    // Minimal GR→EN fallback dictionary for when the API sulks
-    const GR_EN = {
-      "καρκίνος":"carcinoma","καρκίνωμα":"carcinoma","αδενοκαρκίνωμα":"adenocarcinoma","πλακώδες":"squamous",
-      "μικροκυτταρικό":"small cell","μη μικροκυτταρικό":"non-small cell","μελάνωμα":"melanoma","λέμφωμα":"lymphoma",
-      "μαστός":"breast","στήθος":"breast","πνεύμονας":"lung","ήπαρ":"liver","ήπατος":"liver",
-      "παχύ έντερο":"colon","κόλον":"colon","παγκρέας":"pancreas","στομάχι":"stomach","θυρεοειδής":"thyroid",
-      "προστάτης":"prostate","ωοθήκη":"ovary","μήτρα":"uterus","ενδομήτριο":"endometrium","τραχήλος":"cervix",
-      "δέρμα":"skin","γλώσσα":"tongue","οισοφάγος":"esophagus","νεφρός":"kidney","ουροδόχος κύστη":"bladder"
-    };
-
+    // --- Greek normalization helpers (works with or without tonos) ---
+    function stripCombiningMarks(s){
+      return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
     function hasGreek(s){ return /[Α-Ωα-ω]/.test(s||""); }
 
-    function timeout(promise, ms){
-      return new Promise((resolve, reject)=>{
-        const t=setTimeout(()=>reject(new Error("timeout")), ms);
-        promise.then(v=>{clearTimeout(t); resolve(v);}, e=>{clearTimeout(t); reject(e);});
-      });
+    // Phrase replacements (run before token mapping)
+    const GR_PHRASES = [
+      ["ουροδοχος κυστη", "bladder"],
+      ["παχυ εντερο", "colon"],
+      ["μη μικροκυτταρικο", "non small cell"],
+      ["μικροκυτταρικο", "small cell"],
+    ];
+
+    // Token map (normalized Greek -> English)
+    // Add variants you actually see in reports (genitives etc).
+    const GR_WORDS = {
+      // disease / histology
+      "καρκινος":"carcinoma","καρκινου":"carcinoma",
+      "καρκινωμα":"carcinoma","καρκινωματος":"carcinoma",
+      "αδενοκαρκινωμα":"adenocarcinoma","αδενοκαρκινωματος":"adenocarcinoma",
+      "πλακωδες":"squamous","πλακωδους":"squamous",
+      "μελανωμα":"melanoma","μελανωματος":"melanoma",
+      "λεμφωμα":"lymphoma","λεμφωματος":"lymphoma",
+      "σαρκωμα":"sarcoma","σαρκωματος":"sarcoma",
+      "γλοιοβλαστωμα":"glioblastoma","γλοιοβλαστωματος":"glioblastoma",
+
+      // organs / sites (with common inflections)
+      "μαστος":"breast","μαστου":"breast","μαστο":"breast",
+      "στηθος":"breast","στηθους":"breast",
+
+      "πνευμονας":"lung","πνευμονα":"lung","πνευμονος":"lung",
+      "ηπαρ":"liver","ηπατος":"liver",
+      "παγκρεας":"pancreas","παγκρεατος":"pancreas",
+      "στομαχι":"stomach","στομαχου":"stomach",
+      "θυρεοειδης":"thyroid","θυρεοειδους":"thyroid",
+
+      "προστατης":"prostate","προστατη":"prostate","προστατου":"prostate",
+      "ωοθηκη":"ovary","ωοθηκης":"ovary",
+      "μητρα":"uterus","μητρας":"uterus",
+      "ενδομητριο":"endometrium","ενδομητριου":"endometrium",
+      "τραχηλος":"cervix","τραχηλου":"cervix",
+
+      "δερμα":"skin","δερματος":"skin",
+      "γλωσσα":"tongue","γλωσσας":"tongue",
+      "οισοφαγος":"esophagus","οισοφαγου":"esophagus",
+      "νεφρος":"kidney","νεφρου":"kidney",
+
+      "εγκεφαλος":"brain","εγκεφαλου":"brain"
+    };
+
+    function greekToEnglishLocal(text){
+      let s = stripCombiningMarks(String(text||"").toLowerCase());
+      s = s.replace(/[.,;:()]/g, " ");
+      s = s.replace(/\s+/g, " ").trim();
+
+      // phrase replacements first (normalized)
+      for(const [gr,en] of GR_PHRASES){
+        // replace whole phrase occurrences in a simple way
+        s = s.replaceAll(gr, en);
+      }
+
+      const parts = s.split(/\s+/).filter(Boolean);
+      const mapped = parts.map(t => GR_WORDS[t] || t);
+      return mapped.join(" ");
     }
 
     async function translateToEnglish(text){
       if(!hasGreek(text)) return text;
-      try{
-        const res = await timeout(fetch(LT_ENDPOINT, {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ q:text, source:"auto", target:"en", format:"text" })
-        }), TIMEOUT_MS);
-        if(res.ok){
-          const data = await res.json();
-          if(data && data.translatedText) return data.translatedText;
-        }
-      }catch(_e){}
-      // Fallback: rough dictionary substitution
-      let out = text.toLowerCase();
-      for(const [gr,en] of Object.entries(GR_EN)){
-        const rx = new RegExp(`\\b${gr}\\b`, "g");
-        out = out.replace(rx, en);
-      }
-      return out;
+      // No external calls: deterministic, works offline, no CORS drama.
+      return greekToEnglishLocal(text);
     }
 
     function norm(s){
-      return String(s||"")
-        .toLowerCase()
-        .normalize("NFD").replace(/\p{Diacritic}/gu,"")
-        .replace(/[^a-z0-9./\s-]/g," ")
+      // Keep greek letters too (in case something survives translation)
+      return stripCombiningMarks(String(s||"").toLowerCase())
+        .replace(/[^a-z0-9α-ω./\s-]/g," ")
         .replace(/\s+/g," ")
         .trim();
     }
@@ -154,7 +183,6 @@
       return norm(s).split(/\s+/).filter(t=>t.length>1);
     }
 
-    // Canonicalize common shorthands
     function canonToken(t){
       const map = {
         "ca":"carcinoma","ca.":"carcinoma","cancer":"carcinoma",
@@ -164,14 +192,18 @@
       return map[t] || t;
     }
 
-    function scoreCandidate(name, code, qTokens){
-      const nameT = tokens(name).map(canonToken);
+    function scoreCandidate(displayName, code, qTokens, extraText=""){
+      const name = String(displayName||"");
+      const codeStr = String(code||"");
+      const nameT = tokens(name + " " + (extraText||"")).map(canonToken);
+      const normName = norm(name + " " + (extraText||""));
       let score = 0;
 
-      // Code tokens in query boost heavily
+      // Code tokens in query boost heavily (FIX: check code, not name)
       for(const qt of qTokens){
-        if(/^[cC]\d{2}(\.\d)?$/.test(qt) && name.toUpperCase().includes(qt.toUpperCase())) score += 8;
-        if(/^\d{4}(?:\/\d)?$/.test(qt) && String(code).startsWith(qt.replace(/\/.*/,""))) score += 8;
+        const q = qt.trim();
+        if(/^[cC]\d{2}(\.\d)?$/.test(q) && codeStr.toUpperCase().includes(q.toUpperCase())) score += 8;
+        if(/^\d{4}(?:\/\d)?$/.test(q) && codeStr.startsWith(q.replace(/\/.*/,""))) score += 8;
       }
 
       // Token matches
@@ -179,17 +211,11 @@
         const q = canonToken(qt);
         if(!q) continue;
         if(nameT.includes(q)) score += 3;
-        else if(norm(name).includes(q)) score += 2;
+        else if(normName.includes(q)) score += 2;
       }
-
-      // Phrase overlap bonus
-      const nameStr = " " + norm(name) + " ";
-      const queryStr = " " + qTokens.map(canonToken).join(" ") + " ";
-      if(nameStr.includes(queryStr.trim())) score += 2;
 
       // Tie-breaker: slightly favor cleaner names
       score += Math.max(0, 1.2 - Math.log(1 + name.length)/5);
-
       return score;
     }
 
@@ -201,21 +227,51 @@
           const res = await fetch(p, {cache:"no-store"});
           if(!res.ok) continue;
           const text = await res.text();
-          return new Promise(resolve => Papa.parse(text, {header:true, skipEmptyLines:true, complete:r=>resolve(r.data)}));
+          const parsed = await new Promise(resolve =>
+            Papa.parse(text, {header:true, skipEmptyLines:true, complete:r=>resolve(r)})
+          );
+          if(parsed && parsed.data && parsed.data.length){
+            return { data: parsed.data, path: p, errors: parsed.errors || [] };
+          }
         }catch(_e){}
       }
-      return [];
+      return { data: [], path: "", errors: [] };
     }
 
     async function loadData(){
-      $("#status").textContent = "Loading CSVs…";
-      topo = await loadCSV(["data/icdo_topography.csv","docs/data/icdo_topography.csv"]);
-      morph = await loadCSV(["data/icdo_morphology.csv","docs/data/icdo_morphology.csv"]);
-      if(!topo.length || !morph.length){
-        $("#status").innerHTML = `<span class="err">Couldn’t load CSVs. Ensure <code>docs/data/icdo_topography.csv</code> and <code>docs/data/icdo_morphology.csv</code> exist and are UTF-8.</span>`;
+      if (typeof Papa === "undefined"){
+        $("#status").innerHTML = `<span class="err">PapaParse failed to load (CDN issue). Try again later or swap CDN.</span>`;
         return;
       }
-      $("#status").innerHTML = `<span class="ok">CSVs loaded.</span>`;
+
+      $("#status").textContent = "Loading CSVs…";
+
+      // Pages published from /docs => docs/data/* is served as /data/*
+      const topoRes = await loadCSV([
+        "data/icdo_topography.csv",
+        "docs/data/icdo_topography.csv",
+        "icdo_topography.csv"
+      ]);
+
+      const morphRes = await loadCSV([
+        "data/icdo_morphology.csv",
+        "docs/data/icdo_morphology.csv",
+        "icdo_morphology.csv"
+      ]);
+
+      topo = topoRes.data || [];
+      morph = morphRes.data || [];
+
+      if(!topo.length || !morph.length){
+        $("#status").innerHTML =
+          `<span class="err">Couldn’t load CSVs. Expected <code>docs/data/icdo_topography.csv</code> and <code>docs/data/icdo_morphology.csv</code>.</span>`;
+        return;
+      }
+
+      // Non-fatal CSV parse warnings
+      const warnCount = (topoRes.errors?.length||0) + (morphRes.errors?.length||0);
+      $("#status").innerHTML = `<span class="ok">CSVs loaded.</span>` +
+        (warnCount ? ` <span class="muted">(Parse warnings: ${warnCount})</span>` : "");
     }
 
     function pickField(row, candidates){
@@ -226,14 +282,17 @@
     }
 
     function searchBest(query){
-      const qTokens = tokens(query);
+      const qTokens = tokens(query).map(canonToken);
       if(!qTokens.length) return null;
 
-      // Detect headers (supports exact names and a couple of fallbacks)
       const topoCodeKey = pickField(topo[0]||{}, ["topography_code","TopographyCode","code"]);
       const topoNameKey = pickField(topo[0]||{}, ["site_name","SiteName","name","site"]);
+
       const morphCodeKey = pickField(morph[0]||{}, ["morphology_code","MorphologyCode","code"]);
       const morphNameKey = pickField(morph[0]||{}, ["preferred_term","PreferredTerm","name","term"]);
+
+      // Optional: allow richer matching if your morphology CSV has search_terms
+      const morphSearchKey = pickField(morph[0]||{}, ["search_terms","SearchTerms","search"]);
 
       if(!topoCodeKey || !topoNameKey || !morphCodeKey || !morphNameKey) return null;
 
@@ -246,7 +305,8 @@
       const morphScored = morph.map(r=>{
         const name = String(r[morphNameKey]||"");
         const code = String(r[morphCodeKey]||"");
-        return {...r, _name:name, _code:code, _score: scoreCandidate(name, code, qTokens)};
+        const extra = morphSearchKey ? String(r[morphSearchKey]||"") : "";
+        return {...r, _name:name, _code:code, _score: scoreCandidate(name, code, qTokens, extra)};
       }).filter(x=>x._name && x._code);
 
       const bestT = topN(topoScored, 1)[0];
@@ -271,43 +331,41 @@
     }
 
     function composeCode(top, morph){
-      // Use morphology code as-is (includes behavior like /2 or /3)
       return `${top._code} ${morph._code}`;
     }
 
     async function run(){
       const raw = $("#query").value.trim();
-      if(!raw){ return; }
-      $("#status").textContent = "Translating and matching…";
+      if(!raw) return;
 
+      $("#status").textContent = "Translating and matching…";
       const translated = await translateToEnglish(raw);
       const res = searchBest(translated);
 
       if(!res || !res.bestT || !res.bestM){
         $("#resultCard").style.display="none";
         $("#alts").style.display="none";
-        $("#status").innerHTML = `<span class="err">No confident match found. Include both a site (e.g., lung) and a histology (e.g., adenocarcinoma).</span>`;
+        $("#status").innerHTML = `<span class="err">No confident match found. Include both a site (e.g., breast) and a histology (e.g., carcinoma).</span>`;
         return;
       }
 
-      // show best
       $("#resultCard").style.display="";
       $("#alts").style.display="";
       $("#bestTopo").textContent = `${res.bestT._code} — ${res.bestT._name}`;
       $("#bestMorph").textContent = `${res.bestM._code} — ${res.bestM._name}`;
       $("#finalCode").textContent = composeCode(res.bestT, res.bestM);
 
-      // alternatives with click-to-override
       renderAlternatives(res.altT, $("#altTopo"), (pick)=>{
         $("#bestTopo").textContent = `${pick._code} — ${pick._name}`;
         $("#finalCode").textContent = composeCode(pick, res.bestM);
       });
+
       renderAlternatives(res.altM, $("#altMorph"), (pick)=>{
         $("#bestMorph").textContent = `${pick._code} — ${pick._name}`;
         $("#finalCode").textContent = composeCode(res.bestT, pick);
       });
 
-      $("#status").innerHTML = `<span class="ok">Matched.</span>`;
+      $("#status").innerHTML = `<span class="ok">Matched.</span> <span class="muted">(${translated})</span>`;
     }
 
     $("#go").addEventListener("click", run);
