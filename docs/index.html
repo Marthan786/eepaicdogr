@@ -285,7 +285,8 @@
       selectedTopography: null,
       selectedMorphology: null,
       topographyQuery: "",
-      morphologyQuery: ""
+      morphologyQuery: "",
+      topographyPinned: false
     };
 
     const SITE_HINTS = {
@@ -306,6 +307,21 @@
       C22: ["liver", "hepatic", "ηπατ"]
     };
 
+    const SITE_MORPH_HINTS = {
+      C50: [
+        "ductal", "lobular", "mammary", "paget", "phyllodes",
+        "invasive breast", "carcinoma of no special type", "nst",
+        "dcis", "lcis", "intraductal", "in situ", "breast carcinoma",
+        "μαστ", "πορογεν", "λοβιακ", "paget", "φυλλοειδ"
+      ],
+      C18: ["adenocarcinoma", "mucinous", "signet", "serrated", "κολον", "εντερ"],
+      C16: ["adenocarcinoma", "signet", "diffuse", "intestinal", "γαστρ"],
+      C61: ["acinar", "ductal", "prostatic", "προστατ"],
+      C44: ["basal cell", "squamous cell", "melanoma", "sebaceous", "δερμα"],
+      C73: ["papillary", "follicular", "medullary", "θυρεο"],
+      C56: ["serous", "mucinous", "endometrioid", "clear cell", "ωοθηκ"]
+    };
+
     function $(id) {
       return document.getElementById(id);
     }
@@ -319,8 +335,12 @@
       return "";
     }
 
+    function normalizeCode(str = "") {
+      return String(str).trim().toUpperCase();
+    }
+
     function topoCodeOf(row) {
-      return firstNonEmpty(row, ["code", "topography_code", "icdo_code", "icd_o_code"]);
+      return normalizeCode(firstNonEmpty(row, ["code", "topography_code", "icdo_code", "icd_o_code"]));
     }
 
     function topoEnOf(row) {
@@ -332,7 +352,7 @@
     }
 
     function morphCodeOf(row) {
-      return firstNonEmpty(row, ["code", "morphology_code", "icdo_code", "icd_o_code"]);
+      return normalizeCode(firstNonEmpty(row, ["code", "morphology_code", "icdo_code", "icd_o_code"]));
     }
 
     function morphEnOf(row) {
@@ -344,7 +364,7 @@
     }
 
     function topoStem(code = "") {
-      return String(code).toUpperCase().split(".")[0].trim();
+      return normalizeCode(String(code).split(".")[0]);
     }
 
     function stripDiacritics(str = "") {
@@ -467,16 +487,16 @@
       const qTokens = tokenize(q);
       const hTokens = tokenize(h);
 
-      if (c === q) score += 2000;
-      if (c.startsWith(q)) score += 1200;
+      if (c === q) score += 2500;
+      if (c.startsWith(q)) score += 1400;
 
-      if (h === q) score += 1000;
-      if (h.startsWith(q)) score += 700;
+      if (h === q) score += 1100;
+      if (h.startsWith(q)) score += 800;
       if (h.includes(q)) score += 350;
 
       for (const qt of qTokens) {
-        if (hTokens.includes(qt)) score += 120;
-        else if (hTokens.some(t => t.startsWith(qt))) score += 90;
+        if (hTokens.includes(qt)) score += 130;
+        else if (hTokens.some(t => t.startsWith(qt))) score += 95;
         else if (h.includes(qt)) score += 40;
       }
 
@@ -486,7 +506,7 @@
           hTokens.some(t => t.startsWith(qt)) ||
           h.includes(qt)
         );
-        if (allMatch) score += 250;
+        if (allMatch) score += 280;
       }
 
       if (q.length <= 3 && hTokens.some(t => t.startsWith(q))) {
@@ -496,20 +516,36 @@
       return score;
     }
 
+    function selectedTopographyBoost(row) {
+      if (!state.selectedTopography) return 0;
+      const current = topoCodeOf(state.selectedTopography);
+      return topoCodeOf(row) === current ? 100000 : 0;
+    }
+
+    function selectedMorphologyBoost(row) {
+      if (!state.selectedMorphology) return 0;
+      const current = morphCodeOf(state.selectedMorphology);
+      return morphCodeOf(row) === current ? 100000 : 0;
+    }
+
     function rankTopographyRows(rows, query) {
       const q = normalizeText(query);
 
       if (!q) {
         return rows
           .slice()
-          .sort((a, b) => topoCodeOf(a).localeCompare(topoCodeOf(b)))
+          .sort((a, b) => {
+            const diff = selectedTopographyBoost(b) - selectedTopographyBoost(a);
+            if (diff) return diff;
+            return topoCodeOf(a).localeCompare(topoCodeOf(b));
+          })
           .slice(0, 60);
       }
 
       return rows
         .map(row => ({
           row,
-          score: scoreMatch(q, buildTopographySearchText(row), topoCodeOf(row))
+          score: selectedTopographyBoost(row) + scoreMatch(q, buildTopographySearchText(row), topoCodeOf(row))
         }))
         .filter(x => x.score > 0)
         .sort((a, b) => b.score - a.score || topoCodeOf(a.row).localeCompare(topoCodeOf(b.row)))
@@ -535,18 +571,25 @@
       const siteStem = inferSiteStemFromContext();
       if (!siteStem) return 0;
 
-      const hints = SITE_HINTS[siteStem] || [];
       let bonus = 0;
 
-      for (const hint of hints) {
+      const genericHints = SITE_HINTS[siteStem] || [];
+      for (const hint of genericHints) {
         if (morphText.includes(normalizeText(hint))) {
           bonus += 180;
         }
       }
 
+      const morphHints = SITE_MORPH_HINTS[siteStem] || [];
+      for (const hint of morphHints) {
+        if (morphText.includes(normalizeText(hint))) {
+          bonus += 260;
+        }
+      }
+
       const tq = normalizeText(state.topographyQuery);
       if (tq) {
-        for (const hint of hints) {
+        for (const hint of genericHints) {
           if (tq.includes(normalizeText(hint)) && morphText.includes(normalizeText(hint))) {
             bonus += 120;
           }
@@ -567,13 +610,34 @@
 
           return {
             row,
-            score: baseScore + morphologySiteBoost(row)
+            score: selectedMorphologyBoost(row) + baseScore + morphologySiteBoost(row)
           };
         })
         .filter(x => x.score > 0)
         .sort((a, b) => b.score - a.score || morphCodeOf(a.row).localeCompare(morphCodeOf(b.row)))
         .map(x => x.row)
         .slice(0, 60);
+    }
+
+    function setTopographySelection(row) {
+      state.selectedTopography = row || null;
+      state.topographyPinned = !!row;
+
+      if (row) {
+        const label = [topoCodeOf(row), topoEnOf(row), topoElOf(row)].filter(Boolean).join(" | ");
+        state.topographyQuery = label;
+        $("topographySearch").value = label;
+      }
+    }
+
+    function setMorphologySelection(row) {
+      state.selectedMorphology = row || null;
+
+      if (row) {
+        const label = [morphCodeOf(row), morphEnOf(row), morphElOf(row)].filter(Boolean).join(" | ");
+        state.morphologyQuery = label;
+        $("morphologySearch").value = label;
+      }
     }
 
     function renderTopographyList() {
@@ -600,11 +664,9 @@
 
       box.querySelectorAll("[data-topo-code]").forEach(btn => {
         btn.addEventListener("click", () => {
-          const code = btn.getAttribute("data-topo-code");
+          const code = normalizeCode(btn.getAttribute("data-topo-code"));
           const row = state.topographyRows.find(r => topoCodeOf(r) === code);
-
-          state.selectedTopography = row || null;
-
+          setTopographySelection(row);
           renderTopographyList();
           renderMorphologyList();
           renderSelectionPanel();
@@ -636,13 +698,11 @@
 
       box.querySelectorAll("[data-morph-code]").forEach(btn => {
         btn.addEventListener("click", () => {
-          const code = btn.getAttribute("data-morph-code");
+          const code = normalizeCode(btn.getAttribute("data-morph-code"));
           const row = state.morphologyRows.find(r => morphCodeOf(r) === code);
+          setMorphologySelection(row);
 
-          state.selectedMorphology = row || null;
-
-          // Critical fix:
-          // do NOT modify selectedTopography here.
+          // Intentionally do not change topography here.
           renderMorphologyList();
           renderSelectionPanel();
         });
@@ -684,6 +744,7 @@
     function bindEvents() {
       $("topographySearch").addEventListener("input", e => {
         state.topographyQuery = e.target.value || "";
+        state.topographyPinned = false;
         renderTopographyList();
         renderMorphologyList();
       });
@@ -696,6 +757,7 @@
       $("clearTopographyBtn").addEventListener("click", () => {
         state.selectedTopography = null;
         state.topographyQuery = "";
+        state.topographyPinned = false;
         $("topographySearch").value = "";
         renderTopographyList();
         renderMorphologyList();
@@ -715,6 +777,7 @@
         state.selectedMorphology = null;
         state.topographyQuery = "";
         state.morphologyQuery = "";
+        state.topographyPinned = false;
         $("topographySearch").value = "";
         $("morphologySearch").value = "";
         renderTopographyList();
