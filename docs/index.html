@@ -6,43 +6,44 @@
   <title>EEPA ICD-O-3.2 Builder</title>
   <style>
     :root {
-      --bg: #f7f7fb;
+      --bg: #f6f8fc;
       --panel: #ffffff;
-      --text: #1d2433;
+      --text: #1f2937;
       --muted: #6b7280;
-      --line: #d9deea;
+      --line: #d8deea;
       --accent: #2457c5;
       --accent-soft: #eaf0ff;
-      --good: #0f766e;
-      --warn: #9a3412;
-      --shadow: 0 8px 24px rgba(22, 34, 66, 0.08);
+      --shadow: 0 10px 26px rgba(18, 28, 45, 0.08);
       --radius: 16px;
+      --ok: #0f766e;
+      --warn: #b45309;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     .wrap {
-      max-width: 1400px;
+      max-width: 1450px;
       margin: 0 auto;
       padding: 24px;
     }
 
     h1 {
       margin: 0 0 8px 0;
-      font-size: 28px;
-      line-height: 1.2;
+      font-size: 30px;
+      line-height: 1.15;
     }
 
     .subtitle {
       color: var(--muted);
       margin-bottom: 20px;
+      font-size: 14px;
     }
 
     .grid {
@@ -66,11 +67,15 @@
       font-size: 18px;
     }
 
+    .helper {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
     .searchbox {
-      display: flex;
-      gap: 10px;
       margin-bottom: 12px;
-      flex-wrap: wrap;
     }
 
     input[type="text"] {
@@ -79,8 +84,8 @@
       border-radius: 12px;
       padding: 12px 14px;
       font-size: 15px;
+      background: #fff;
       outline: none;
-      background: white;
     }
 
     input[type="text"]:focus {
@@ -88,17 +93,11 @@
       box-shadow: 0 0 0 4px rgba(36, 87, 197, 0.08);
     }
 
-    .helper {
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-
     .results {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 68vh;
+      max-height: 70vh;
       overflow: auto;
       padding-right: 4px;
     }
@@ -106,7 +105,7 @@
     .result-item {
       width: 100%;
       text-align: left;
-      background: white;
+      background: #fff;
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 12px;
@@ -126,20 +125,23 @@
 
     .result-code {
       font-weight: 700;
+      font-size: 14px;
       color: var(--accent);
       margin-bottom: 4px;
-      font-size: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
     .result-title {
       font-weight: 600;
       font-size: 15px;
       margin-bottom: 2px;
+      line-height: 1.35;
     }
 
     .result-sub {
       color: var(--muted);
       font-size: 13px;
+      line-height: 1.35;
     }
 
     .panel-block {
@@ -157,25 +159,11 @@
 
     .code-line {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 700;
       color: var(--accent);
       margin-bottom: 8px;
     }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .status {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 10px;
-      line-height: 1.4;
-    }
-
-    .status.ok { color: var(--good); }
-    .status.warn { color: var(--warn); }
 
     .row {
       margin-bottom: 6px;
@@ -183,22 +171,15 @@
       line-height: 1.45;
     }
 
-    .badge {
-      display: inline-block;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #334155;
-      border: 1px solid #dbe4ff;
-      margin: 2px 6px 2px 0;
+    .muted {
+      color: var(--muted);
     }
 
     .toolbar {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     button.small {
@@ -214,10 +195,21 @@
       border-color: var(--accent);
     }
 
+    .status {
+      font-size: 13px;
+      margin-top: 12px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.warn { color: var(--warn); }
+
     .empty {
       color: var(--muted);
       padding: 12px 4px;
       font-size: 14px;
+      line-height: 1.45;
     }
 
     @media (max-width: 1100px) {
@@ -235,7 +227,7 @@
   <div class="wrap">
     <h1>EEPA ICD-O-3.2 Builder</h1>
     <div class="subtitle">
-      Topography and morphology selector with accent-insensitive Greek search and site-constrained morphology.
+      Separate topography and morphology search with accent-insensitive Greek matching and stable code selection.
     </div>
 
     <div class="grid">
@@ -248,7 +240,7 @@
           <input
             id="topographySearch"
             type="text"
-            placeholder="Search topography, e.g. breast, μαστ, μαστός, C50.4"
+            placeholder="Search topography, e.g. breast, μαστ, μαστός, C50.1"
             autocomplete="off"
           />
         </div>
@@ -258,13 +250,13 @@
       <section class="card">
         <h2>Morphology</h2>
         <div class="helper">
-          Results are constrained by the selected topography through the mapping table.
+          Morphology is ranked more intelligently based on the selected or typed site.
         </div>
         <div class="searchbox">
           <input
             id="morphologySearch"
             type="text"
-            placeholder="Search morphology, e.g. ductal, invasive, 8500/3"
+            placeholder="Search morphology, e.g. carcinoma, ductal, 8500/3"
             autocomplete="off"
           />
         </div>
@@ -290,35 +282,69 @@
     const state = {
       topographyRows: [],
       morphologyRows: [],
-      morphMap: new Map(),          // key: exact topo code or topo stem -> Set(morph codes)
       selectedTopography: null,
       selectedMorphology: null,
       topographyQuery: "",
       morphologyQuery: ""
     };
 
-    const CONFIG = {
-      topographyPaths: [
-        "./data/topography.csv",
-        "./topography.csv"
-      ],
-      morphologyPaths: [
-        "./data/morphology.csv",
-        "./morphology.csv"
-      ],
-      mappingPaths: [
-        "./data/topography_morphology_map.csv",
-        "./data/topo_morph_map.csv",
-        "./data/morphology_topography_map.csv",
-        "./topography_morphology_map.csv",
-        "./topo_morph_map.csv",
-        "./morphology_topography_map.csv"
-      ],
-      maxResults: 60
+    const SITE_HINTS = {
+      C50: ["breast", "mammary", "μαστος", "μαστου", "μαστικ", "μαστικος", "μαστικου"],
+      C18: ["colon", "colonic", "κολο", "παχυ εντερο"],
+      C16: ["stomach", "gastric", "στομαχ", "γαστρ"],
+      C61: ["prostate", "prostatic", "προστατ"],
+      C34: ["lung", "pulmonary", "πνευμον"],
+      C44: ["skin", "cutaneous", "δερμα", "δερματ"],
+      C73: ["thyroid", "θυρεο"],
+      C67: ["bladder", "ουροδοχ", "κυστη"],
+      C56: ["ovary", "ovarian", "ωοθηκ"],
+      C54: ["endometrium", "uterus", "uterine", "ενδομητρ", "μητρ"],
+      C53: ["cervix", "τραχηλο"],
+      C64: ["kidney", "renal", "νεφρ"],
+      C71: ["brain", "cerebral", "εγκεφαλ"],
+      C25: ["pancreas", "pancreatic", "παγκρεατ"],
+      C22: ["liver", "hepatic", "ηπατ"]
     };
 
     function $(id) {
       return document.getElementById(id);
+    }
+
+    function firstNonEmpty(row, keys) {
+      for (const key of keys) {
+        if (row[key] != null && String(row[key]).trim() !== "") {
+          return String(row[key]).trim();
+        }
+      }
+      return "";
+    }
+
+    function topoCodeOf(row) {
+      return firstNonEmpty(row, ["code", "topography_code", "icdo_code", "icd_o_code"]);
+    }
+
+    function topoEnOf(row) {
+      return firstNonEmpty(row, ["term_en", "preferred_term", "preferred_term_en", "english", "name_en", "label_en"]);
+    }
+
+    function topoElOf(row) {
+      return firstNonEmpty(row, ["term_el", "preferred_term_el", "greek", "name_el", "label_el"]);
+    }
+
+    function morphCodeOf(row) {
+      return firstNonEmpty(row, ["code", "morphology_code", "icdo_code", "icd_o_code"]);
+    }
+
+    function morphEnOf(row) {
+      return firstNonEmpty(row, ["preferred_term", "preferred_term_en", "term_en", "english", "name_en", "label_en"]);
+    }
+
+    function morphElOf(row) {
+      return firstNonEmpty(row, ["preferred_term_el", "term_el", "greek", "name_el", "label_el"]);
+    }
+
+    function topoStem(code = "") {
+      return String(code).toUpperCase().split(".")[0].trim();
     }
 
     function stripDiacritics(str = "") {
@@ -342,7 +368,7 @@
       return normalizeText(str).split(" ").filter(Boolean);
     }
 
-    function htmlEscape(str = "") {
+    function escapeHtml(str = "") {
       return String(str)
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -382,70 +408,28 @@
       if (!lines.length) return [];
 
       const headers = splitCSVLine(lines[0]).map(h => h.trim());
+
       return lines.slice(1).map(line => {
         const cols = splitCSVLine(line);
         const row = {};
-        headers.forEach((h, i) => row[h] = (cols[i] || "").trim());
+        headers.forEach((h, i) => {
+          row[h] = (cols[i] || "").trim();
+        });
         return row;
       });
     }
 
-    async function fetchFirstExisting(paths) {
+    async function loadCSV(paths) {
       for (const path of paths) {
         try {
           const res = await fetch(path, { cache: "no-store" });
           if (res.ok) {
-            return {
-              path,
-              text: await res.text()
-            };
+            const text = await res.text();
+            return parseCSV(text);
           }
-        } catch (e) {}
+        } catch (err) {}
       }
-      throw new Error("None of the candidate paths could be loaded: " + paths.join(", "));
-    }
-
-    function firstNonEmpty(row, candidates) {
-      for (const key of candidates) {
-        if (row[key] != null && String(row[key]).trim() !== "") return String(row[key]).trim();
-      }
-      return "";
-    }
-
-    function topoCodeOf(row) {
-      return firstNonEmpty(row, ["code", "topography_code", "icdo_code", "icd_o_code"]);
-    }
-
-    function topoEnOf(row) {
-      return firstNonEmpty(row, [
-        "term_en", "preferred_term", "preferred_term_en", "english", "name_en", "label_en", "description_en"
-      ]);
-    }
-
-    function topoElOf(row) {
-      return firstNonEmpty(row, [
-        "term_el", "preferred_term_el", "greek", "name_el", "label_el", "description_el"
-      ]);
-    }
-
-    function morphCodeOf(row) {
-      return firstNonEmpty(row, ["code", "morphology_code", "icdo_code", "icd_o_code"]);
-    }
-
-    function morphEnOf(row) {
-      return firstNonEmpty(row, [
-        "preferred_term", "preferred_term_en", "term_en", "english", "name_en", "label_en", "description_en"
-      ]);
-    }
-
-    function morphElOf(row) {
-      return firstNonEmpty(row, [
-        "preferred_term_el", "term_el", "greek", "name_el", "label_el", "description_el"
-      ]);
-    }
-
-    function topoStem(code = "") {
-      return String(code).toUpperCase().split(".")[0].trim();
+      throw new Error("Could not load CSV from: " + paths.join(", "));
     }
 
     function buildTopographySearchText(row) {
@@ -453,11 +437,11 @@
         topoCodeOf(row),
         topoEnOf(row),
         topoElOf(row),
-        row.main_term,
         row.synonyms,
         row.synonyms_el,
-        row.site,
-        row.description
+        row.description,
+        row.main_term,
+        row.site
       ].filter(Boolean).join(" "));
     }
 
@@ -505,70 +489,96 @@
         if (allMatch) score += 250;
       }
 
-      if (q.length <= 3) {
-        if (hTokens.some(t => t.startsWith(q))) score += 140;
+      if (q.length <= 3 && hTokens.some(t => t.startsWith(q))) {
+        score += 140;
       }
 
       return score;
     }
 
-    function rankRows(rows, query, searchBuilder, codeGetter) {
+    function rankTopographyRows(rows, query) {
       const q = normalizeText(query);
 
       if (!q) {
-        return rows.slice(0, CONFIG.maxResults);
+        return rows
+          .slice()
+          .sort((a, b) => topoCodeOf(a).localeCompare(topoCodeOf(b)))
+          .slice(0, 60);
       }
 
       return rows
         .map(row => ({
           row,
-          score: scoreMatch(q, searchBuilder(row), codeGetter(row))
+          score: scoreMatch(q, buildTopographySearchText(row), topoCodeOf(row))
         }))
         .filter(x => x.score > 0)
-        .sort((a, b) => b.score - a.score || String(codeGetter(a.row)).localeCompare(String(codeGetter(b.row))))
+        .sort((a, b) => b.score - a.score || topoCodeOf(a.row).localeCompare(topoCodeOf(b.row)))
         .map(x => x.row)
-        .slice(0, CONFIG.maxResults);
+        .slice(0, 60);
     }
 
-    function allowedMorphologyCodesForTopography(topographyRow) {
-      if (!topographyRow) return null;
-
-      const exact = topoCodeOf(topographyRow).toUpperCase();
-      const stem = topoStem(exact);
-
-      const exactSet = state.morphMap.get(exact);
-      const stemSet = state.morphMap.get(stem);
-
-      if (exactSet && stemSet) {
-        return new Set([...exactSet, ...stemSet]);
+    function inferSiteStemFromContext() {
+      if (state.selectedTopography) {
+        return topoStem(topoCodeOf(state.selectedTopography));
       }
-      if (exactSet) return exactSet;
-      if (stemSet) return stemSet;
 
-      return new Set();
+      const topMatches = rankTopographyRows(state.topographyRows, state.topographyQuery);
+      if (topMatches.length) {
+        return topoStem(topoCodeOf(topMatches[0]));
+      }
+
+      return "";
     }
 
-    function getFilteredMorphologyRows() {
-      if (!state.selectedTopography) {
-        return state.morphologyRows;
+    function morphologySiteBoost(row) {
+      const morphText = buildMorphologySearchText(row);
+      const siteStem = inferSiteStemFromContext();
+      if (!siteStem) return 0;
+
+      const hints = SITE_HINTS[siteStem] || [];
+      let bonus = 0;
+
+      for (const hint of hints) {
+        if (morphText.includes(normalizeText(hint))) {
+          bonus += 180;
+        }
       }
 
-      const allowed = allowedMorphologyCodesForTopography(state.selectedTopography);
+      const tq = normalizeText(state.topographyQuery);
+      if (tq) {
+        for (const hint of hints) {
+          if (tq.includes(normalizeText(hint)) && morphText.includes(normalizeText(hint))) {
+            bonus += 120;
+          }
+        }
+      }
 
-      if (allowed == null) return state.morphologyRows;
-      if (allowed.size === 0) return [];
+      return bonus;
+    }
 
-      return state.morphologyRows.filter(row => allowed.has(morphCodeOf(row).toUpperCase()));
+    function rankMorphologyRows(rows, query) {
+      const q = normalizeText(query);
+
+      return rows
+        .map(row => {
+          const baseScore = q
+            ? scoreMatch(q, buildMorphologySearchText(row), morphCodeOf(row))
+            : 1;
+
+          return {
+            row,
+            score: baseScore + morphologySiteBoost(row)
+          };
+        })
+        .filter(x => x.score > 0)
+        .sort((a, b) => b.score - a.score || morphCodeOf(a.row).localeCompare(morphCodeOf(b.row)))
+        .map(x => x.row)
+        .slice(0, 60);
     }
 
     function renderTopographyList() {
       const box = $("topographyResults");
-      const rows = rankRows(
-        state.topographyRows,
-        state.topographyQuery,
-        buildTopographySearchText,
-        topoCodeOf
-      );
+      const rows = rankTopographyRows(state.topographyRows, state.topographyQuery);
 
       if (!rows.length) {
         box.innerHTML = `<div class="empty">No topography matches.</div>`;
@@ -577,15 +587,13 @@
 
       box.innerHTML = rows.map(row => {
         const code = topoCodeOf(row);
-        const en = topoEnOf(row);
-        const el = topoElOf(row);
         const selected = state.selectedTopography && topoCodeOf(state.selectedTopography) === code;
 
         return `
-          <button type="button" class="result-item ${selected ? "selected" : ""}" data-topo-code="${htmlEscape(code)}">
-            <div class="result-code">${htmlEscape(code)}</div>
-            <div class="result-title">${htmlEscape(en || "(no English term)")}</div>
-            <div class="result-sub">${htmlEscape(el || "")}</div>
+          <button type="button" class="result-item ${selected ? "selected" : ""}" data-topo-code="${escapeHtml(code)}">
+            <div class="result-code">${escapeHtml(code)}</div>
+            <div class="result-title">${escapeHtml(topoEnOf(row) || "(no English term)")}</div>
+            <div class="result-sub">${escapeHtml(topoElOf(row) || "")}</div>
           </button>
         `;
       }).join("");
@@ -594,15 +602,8 @@
         btn.addEventListener("click", () => {
           const code = btn.getAttribute("data-topo-code");
           const row = state.topographyRows.find(r => topoCodeOf(r) === code);
-          state.selectedTopography = row || null;
 
-          if (state.selectedMorphology) {
-            const allowed = allowedMorphologyCodesForTopography(state.selectedTopography);
-            const currentMorphCode = morphCodeOf(state.selectedMorphology).toUpperCase();
-            if (!allowed || !allowed.has(currentMorphCode)) {
-              state.selectedMorphology = null;
-            }
-          }
+          state.selectedTopography = row || null;
 
           renderTopographyList();
           renderMorphologyList();
@@ -613,96 +614,35 @@
 
     function renderMorphologyList() {
       const box = $("morphologyResults");
-      const filteredRows = getFilteredMorphologyRows();
-
-      const rows = rankRows(
-        filteredRows,
-        state.morphologyQuery,
-        buildMorphologySearchText,
-        morphCodeOf
-      );
-
-      if (!state.selectedTopography) {
-        box.innerHTML = `
-          <div class="empty">
-            Select a topography first if you want site-constrained morphology.<br>
-            You can still search all morphology terms.
-          </div>
-        `;
-
-        if (state.morphologyQuery.trim()) {
-          const allRows = rankRows(
-            state.morphologyRows,
-            state.morphologyQuery,
-            buildMorphologySearchText,
-            morphCodeOf
-          );
-
-          if (allRows.length) {
-            box.innerHTML = allRows.map(row => {
-              const code = morphCodeOf(row);
-              const en = morphEnOf(row);
-              const el = morphElOf(row);
-              const selected = state.selectedMorphology && morphCodeOf(state.selectedMorphology) === code;
-
-              return `
-                <button type="button" class="result-item ${selected ? "selected" : ""}" data-morph-code="${htmlEscape(code)}">
-                  <div class="result-code">${htmlEscape(code)}</div>
-                  <div class="result-title">${htmlEscape(en || "(no English term)")}</div>
-                  <div class="result-sub">${htmlEscape(el || "")}</div>
-                </button>
-              `;
-            }).join("");
-          }
-        }
-
-        bindMorphologyClicks();
-        return;
-      }
-
-      if (!filteredRows.length) {
-        box.innerHTML = `
-          <div class="empty">
-            No mapped morphology entries were found for <strong>${htmlEscape(topoCodeOf(state.selectedTopography))}</strong>.
-          </div>
-        `;
-        return;
-      }
+      const rows = rankMorphologyRows(state.morphologyRows, state.morphologyQuery);
 
       if (!rows.length) {
-        box.innerHTML = `<div class="empty">No morphology matches for the selected site.</div>`;
+        box.innerHTML = `<div class="empty">No morphology matches.</div>`;
         return;
       }
 
       box.innerHTML = rows.map(row => {
         const code = morphCodeOf(row);
-        const en = morphEnOf(row);
-        const el = morphElOf(row);
         const selected = state.selectedMorphology && morphCodeOf(state.selectedMorphology) === code;
 
         return `
-          <button type="button" class="result-item ${selected ? "selected" : ""}" data-morph-code="${htmlEscape(code)}">
-            <div class="result-code">${htmlEscape(code)}</div>
-            <div class="result-title">${htmlEscape(en || "(no English term)")}</div>
-            <div class="result-sub">${htmlEscape(el || "")}</div>
+          <button type="button" class="result-item ${selected ? "selected" : ""}" data-morph-code="${escapeHtml(code)}">
+            <div class="result-code">${escapeHtml(code)}</div>
+            <div class="result-title">${escapeHtml(morphEnOf(row) || "(no English term)")}</div>
+            <div class="result-sub">${escapeHtml(morphElOf(row) || "")}</div>
           </button>
         `;
       }).join("");
 
-      bindMorphologyClicks();
-    }
-
-    function bindMorphologyClicks() {
-      const box = $("morphologyResults");
       box.querySelectorAll("[data-morph-code]").forEach(btn => {
         btn.addEventListener("click", () => {
           const code = btn.getAttribute("data-morph-code");
           const row = state.morphologyRows.find(r => morphCodeOf(r) === code);
+
           state.selectedMorphology = row || null;
 
-          // IMPORTANT:
-          // do not touch selectedTopography here
-          // this is the bug you described
+          // Critical fix:
+          // do NOT modify selectedTopography here.
           renderMorphologyList();
           renderSelectionPanel();
         });
@@ -714,110 +654,38 @@
       const topo = state.selectedTopography;
       const morph = state.selectedMorphology;
 
-      const topoCode = topo ? topoCodeOf(topo) : "";
-      const topoEn = topo ? topoEnOf(topo) : "";
-      const topoEl = topo ? topoElOf(topo) : "";
-
-      const morphCode = morph ? morphCodeOf(morph) : "";
-      const morphEn = morph ? morphEnOf(morph) : "";
-      const morphEl = morph ? morphElOf(morph) : "";
-
-      let mappingInfo = "";
-      if (topo) {
-        const allowed = allowedMorphologyCodesForTopography(topo);
-        const count = allowed ? allowed.size : 0;
-        mappingInfo = `<span class="badge">Mapped morphology entries: ${count}</span>`;
-      }
-
       box.innerHTML = `
         <div class="panel-block">
           <h3>Topography</h3>
           ${topo ? `
-            <div class="code-line">${htmlEscape(topoCode)}</div>
-            <div class="row"><strong>English:</strong> ${htmlEscape(topoEn || "-")}</div>
-            <div class="row"><strong>Greek:</strong> ${htmlEscape(topoEl || "-")}</div>
+            <div class="code-line">${escapeHtml(topoCodeOf(topo))}</div>
+            <div class="row"><strong>English:</strong> ${escapeHtml(topoEnOf(topo) || "-")}</div>
+            <div class="row"><strong>Greek:</strong> ${escapeHtml(topoElOf(topo) || "-")}</div>
           ` : `<div class="muted">No topography selected.</div>`}
         </div>
 
         <div class="panel-block">
           <h3>Morphology</h3>
           ${morph ? `
-            <div class="code-line">${htmlEscape(morphCode)}</div>
-            <div class="row"><strong>English:</strong> ${htmlEscape(morphEn || "-")}</div>
-            <div class="row"><strong>Greek:</strong> ${htmlEscape(morphEl || "-")}</div>
+            <div class="code-line">${escapeHtml(morphCodeOf(morph))}</div>
+            <div class="row"><strong>English:</strong> ${escapeHtml(morphEnOf(morph) || "-")}</div>
+            <div class="row"><strong>Greek:</strong> ${escapeHtml(morphElOf(morph) || "-")}</div>
           ` : `<div class="muted">No morphology selected.</div>`}
         </div>
 
         <div class="panel-block">
-          <h3>Combined output</h3>
-          <div class="row"><strong>Topography code:</strong> ${htmlEscape(topoCode || "-")}</div>
-          <div class="row"><strong>Morphology code:</strong> ${htmlEscape(morphCode || "-")}</div>
-          ${mappingInfo}
+          <h3>Combined</h3>
+          <div class="row"><strong>Topography code:</strong> ${escapeHtml(topo ? topoCodeOf(topo) : "-")}</div>
+          <div class="row"><strong>Morphology code:</strong> ${escapeHtml(morph ? morphCodeOf(morph) : "-")}</div>
         </div>
       `;
-    }
-
-    function setStatus(msg, kind = "") {
-      const el = $("loadStatus");
-      el.className = "status" + (kind ? " " + kind : "");
-      el.textContent = msg;
-    }
-
-    function normalizeLoadedTopographyRows(rows) {
-      return rows
-        .map(row => ({
-          ...row,
-          code: topoCodeOf(row),
-          term_en: topoEnOf(row),
-          term_el: topoElOf(row)
-        }))
-        .filter(row => row.code);
-    }
-
-    function normalizeLoadedMorphologyRows(rows) {
-      return rows
-        .map(row => ({
-          ...row,
-          code: morphCodeOf(row),
-          preferred_term: morphEnOf(row),
-          preferred_term_el: morphElOf(row)
-        }))
-        .filter(row => row.code);
-    }
-
-    function buildMorphMap(rows) {
-      const map = new Map();
-
-      function add(key, morphCode) {
-        const k = String(key || "").toUpperCase().trim();
-        const m = String(morphCode || "").toUpperCase().trim();
-        if (!k || !m) return;
-        if (!map.has(k)) map.set(k, new Set());
-        map.get(k).add(m);
-      }
-
-      for (const row of rows) {
-        const topo = firstNonEmpty(row, [
-          "topography_code", "topo_code", "site_code", "topography", "code_topography"
-        ]).toUpperCase();
-
-        const morph = firstNonEmpty(row, [
-          "morphology_code", "morph_code", "histology_code", "morphology", "code_morphology"
-        ]).toUpperCase();
-
-        if (!topo || !morph) continue;
-
-        add(topo, morph);
-        add(topoStem(topo), morph);
-      }
-
-      return map;
     }
 
     function bindEvents() {
       $("topographySearch").addEventListener("input", e => {
         state.topographyQuery = e.target.value || "";
         renderTopographyList();
+        renderMorphologyList();
       });
 
       $("morphologySearch").addEventListener("input", e => {
@@ -857,37 +725,32 @@
 
     async function init() {
       try {
-        setStatus("Loading topography...");
-        const topoLoaded = await fetchFirstExisting(CONFIG.topographyPaths);
-        const topoRows = normalizeLoadedTopographyRows(parseCSV(topoLoaded.text));
+        state.topographyRows = await loadCSV([
+          "./data/topography.csv",
+          "./topography.csv"
+        ]);
 
-        setStatus("Loading morphology...");
-        const morphLoaded = await fetchFirstExisting(CONFIG.morphologyPaths);
-        const morphRows = normalizeLoadedMorphologyRows(parseCSV(morphLoaded.text));
-
-        setStatus("Loading mapping...");
-        const mapLoaded = await fetchFirstExisting(CONFIG.mappingPaths);
-        const mapRows = parseCSV(mapLoaded.text);
-        const morphMap = buildMorphMap(mapRows);
-
-        state.topographyRows = topoRows;
-        state.morphologyRows = morphRows;
-        state.morphMap = morphMap;
+        state.morphologyRows = await loadCSV([
+          "./data/morphology.csv",
+          "./morphology.csv"
+        ]);
 
         bindEvents();
         renderTopographyList();
         renderMorphologyList();
         renderSelectionPanel();
 
-        setStatus(
-          `Loaded ${topoRows.length} topography rows, ${morphRows.length} morphology rows, ${morphMap.size} mapped site keys.`,
-          "ok"
-        );
+        const loadStatus = $("loadStatus");
+        loadStatus.textContent =
+          `Loaded ${state.topographyRows.length} topography rows and ${state.morphologyRows.length} morphology rows.`;
+        loadStatus.className = "status ok";
       } catch (err) {
         console.error(err);
-        setStatus("Load failed: " + err.message, "warn");
-        $("topographyResults").innerHTML = `<div class="empty">Could not load data files.</div>`;
-        $("morphologyResults").innerHTML = `<div class="empty">Could not load data files.</div>`;
+        const loadStatus = $("loadStatus");
+        loadStatus.textContent = "Load failed: " + err.message;
+        loadStatus.className = "status warn";
+        $("topographyResults").innerHTML = `<div class="empty">Could not load topography.csv.</div>`;
+        $("morphologyResults").innerHTML = `<div class="empty">Could not load morphology.csv.</div>`;
         $("selectionPanel").innerHTML = `<div class="muted">No data loaded.</div>`;
       }
     }
